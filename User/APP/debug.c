@@ -49,6 +49,9 @@ void InterpretCommand(void)
 //        case 'C' :				//C进入坐标位置控制模式
 //            coor_sort();
 //            break;
+					        case 'J':
+            state = JUMP;
+            break;
         case 'S':
             state = STOP;
             break;

@@ -12,10 +12,15 @@ void CycloidTrajectory (float t, GaitParams params, float gait_offset) ;
 void SinTrajectory (float t, GaitParams params, float gait_offset) ;
 void CartesianToTheta(float leg_direction) ;
 void SetCoupledPosition(int LegId);
-void CommandAllLegs(void);
+void CommandAllLegs(LegGain gains);
 bool IsValidLegGain( LegGain gains);
 bool IsValidGaitParams( GaitParams params);
 void ChangeTheGainsOfPD(LegGain gains);
+
+void StartJump(float start_time_s);
+void TrajectoryJump(float t, float launchTime, float stanceHeight, float downAMP) ;
+void ExecuteJump();
+
 
 static float x, y, theta1, theta2;
 
@@ -43,36 +48,37 @@ LegGain state_gait_gains[] = {
     {15.5, 0.00, 25.0, 0.00}, // WALK		right
     {15.5, 0.00, 25.0, 0.00}, // ROTATE		left
     {15.5, 0.00, 25.0, 0.00}, // ROTATE		right
+    {15.5, 0.00, 25.0, 0.00}, // JUMP
 };
 //设定每一种步态的具体参数
 GaitParams state_gait_params[] = {
     //{stance_height,step_length,up_amp,down_amp,flight_percent,freq}  cm
     {NAN, NAN, NAN, NAN, NAN, NAN}, // STOP
     {16.0, 0.00, 0.00, 5.00, 0.75, 1.0}, // PRONK		//单拍步态 四足跳跃
-    {16.0, 15.0, 6.00, 2.00, 0.25, 2.0}, // TROT		//双拍步态 对角小跑
-    {17.0, 15.0, 6.00, 4.00, 0.35, 2.0}, // PACE		//双拍步态 同侧溜步
-    {17.0, 0.00, 6.00, 4.00, 0.35, 2.0}, // BOUND		//双拍步态 跳跑
-    {17.0, 0.00, 6.00, 4.00, 0.35, 2.0}, // GALLOP		//准两拍步态 跳跃
+    {16.0, 15.0, 5.00, 2.00, 0.25, 2.0}, // TROT		//双拍步态 对角小跑
+    {17.3, 15.0, 6.00, 4.00, 0.35, 2.0}, // PACE		//双拍步态 同侧溜步
+    {17.3, 0.00, 5.00, 4.00, 0.35, 2.5}, // BOUND		//双拍步态 跳跑
+    {17.3, 0.00, 6.00, 4.00, 0.35, 2.0}, // GALLOP		//准两拍步态 跳跃
 
     {15.3, 0.00, 5.0, 0.00, 0.10, 1.5}, // WALK		//四拍步态 单步行走
     {17.3, 10.0, 4.0, 0.00, 0.35, 2.0}, // ROTATE		//旋转
 
     {16.0, 16.00, 5.0, 0.00, 0.20, 2.0}, // WALK		ahead
-    {16.0, 8.00, 5.0, 0.00, 0.25, 2.0}, // WALK		back
+    {15.0, 6.00, 4.0, 0.00, 0.25, 2.0}, // WALK		back
 
     {17.3, 10.0, 6.0, 0.00, 0.35, 2.0}, // WALK		left
     {17.3, 10.0, 6.0, 0.00, 0.35, 2.0}, // WALK		right
 
     {15.3, 12.00, 5.0, 0.00, 0.25, 2.5}, // ROTATE		left
-    {15.3, 12.00, 5.0, 0.00, 0.25, 2.5} // ROTATE		right
+    {15.3, 12.00, 5.0, 0.00, 0.25, 2.5}, // ROTATE		right
+    {NAN, NAN, NAN, NAN, NAN, NAN} // JUMP
 };
 
-/*最低walk {12.0, 15.0, 1.8, 0.00, 0.50, 1.0}
-*效果不错{14.0, 12.0, 3.5, 0.00, 0.50, 1.0},
-*
-*  {16.0, 12.00, 5.0, 0.00, 0.20, 2.0}, // WALK		ahead 不错
-*  {17.3, 12.00, 4.0, 0.00, 0.35, 2.5}, // WALK		ahead
-*
+/**
+*	最低walk {12.0, 15.0, 1.8, 0.00, 0.50, 1.0}
+*	效果不错{14.0, 12.0, 3.5, 0.00, 0.50, 1.0},
+*	{16.0, 12.00, 5.0, 0.00, 0.20, 2.0}, // WALK		ahead 不错
+*	{17.3, 12.00, 4.0, 0.00, 0.35, 2.5}, // WALK		ahead
 */
 
 GaitParams gait_params_1 = {16.0, 16.00, 5.0, 0.00, 0.50, 2.0};
@@ -95,7 +101,7 @@ void PostureControl_task(void *pvParameters)
             x=0;
             y = 17.3205081;
             CartesianToTheta(1.0);
-            CommandAllLegs();
+            CommandAllLegs(gait_gains);
             // vTaskDelay(10);
             //printf("\r\n x=%f  y=%f  theta1=%f  theta2=%f   he=%f ",x,y,theta1,theta2,theta1+theta2);
             break;
@@ -139,6 +145,9 @@ void PostureControl_task(void *pvParameters)
             break;
         case ROTAT_RIGHT:		//原地右转
             gait(gait_params, gait_gains, 0.0, 0.5, 0.5, 0.00, 1.0, -1.0, 1.0, -1.0);
+            break;
+        case JUMP:		//跳跃
+            ExecuteJump();
             break;
 
         }
@@ -354,8 +363,18 @@ void SetCoupledPosition( int LegId)
 * NAME: void CommandAllLegs(void)
 * FUNCTION : 控制所有电机
 */
-void CommandAllLegs(void)
+void CommandAllLegs(LegGain gains)
 {
+    if (!IsValidLegGain(gains)) {
+        return;
+    }
+
+    //限位保护
+    if((theta1+theta2)>170||(theta1+theta2)<-170||theta1>140||theta1<-140||theta2>140||theta2<-140)
+        vTaskSuspend(MotorControlTask_Handler);
+
+    ChangeTheGainsOfPD(gains);
+
     SetCoupledPosition(0);
     SetCoupledPosition(1);
     SetCoupledPosition(2);
@@ -395,7 +414,12 @@ bool IsValidLegGain( LegGain gains) {
     }
     return true;
 }
-
+/**
+ *
+ * 检测步态参数是否正确
+ * @param  gains LegGain to check
+ * @return       True if valid gains, false if invalid
+ */
 bool IsValidGaitParams( GaitParams params) {
     const float maxL = 29.8;
     const float minL = 10.1;
@@ -438,7 +462,10 @@ bool IsValidGaitParams( GaitParams params) {
 
     return true;
 }
-
+/**
+ *改变腿部增益
+ *调用了PID_reset_kpKd 函数
+ */
 void ChangeTheGainsOfPD(LegGain gains)
 {
     uint8_t count=0;
@@ -453,3 +480,95 @@ void ChangeTheGainsOfPD(LegGain gains)
     }
 
 }
+
+
+// Privates
+float start_time_ = 0.0f;
+
+/**
+ * Tell the position control thread to do the jump
+ * @param start_time_s The timestamp of when the jump command was sent
+ */
+void StartJump(float start_time_s) {
+    start_time_ = start_time_s;
+    state = JUMP;
+}
+
+/**
+* Linear increase in height for jump.
+*/
+void TrajectoryJump(float t, float launchTime, float stanceHeight, float downAMP) {
+    //Need to check if n works
+    float n = t/launchTime;
+    x = 0;
+    y = downAMP*n + stanceHeight;
+    //y = downAMP*sin(PI/4 + PI/4*n) + stanceHeight;
+}
+
+/**
+* Drives the ODrives in an open-loop, position-control sinTrajectory.
+*/
+void ExecuteJump() {
+    // min radius = 0.8
+    // max radius = 0.25
+
+    // x= y= theta1= theta2=0.0;
+
+
+    const float prep_time = 0.8f; // Duration before jumping [s]
+    const float launch_time = 0.5f ; // Duration before retracting the leg [s]
+    const float fall_time = 1.0f; //Duration after retracting leg to go back to normal behavior [s]
+
+    const float stance_height = 14.0f; // Desired leg extension before the jump [cm]
+    const float jump_extension = 24.9f; // Maximum leg extension in [cm]
+    const float fall_extension = 13.0f; // Desired leg extension during fall [cm]
+
+
+    float t = times/1000.0f - start_time_; // Seconds since jump was commanded
+
+    if (t < prep_time) {
+        x = 0;
+        y = stance_height;
+        CartesianToTheta(1.0);
+
+        // Use gains with small stiffness and lots of damping
+        LegGain gains = {15.5, 0.00, 25.0, 0.00};
+        CommandAllLegs(gains);
+        // Serial << "Prep: +" << t << "s, y: " << y;
+    } else if (t >= prep_time && t < prep_time + launch_time) {
+        x = 0;
+        y = jump_extension;
+        CartesianToTheta(1.0);
+
+        // Use high stiffness and low damping to execute the jump
+        LegGain gains = {15.5, 0.00, 25.0, 0.00};
+        CommandAllLegs(gains);
+        // Serial << "Jump: +" << t << "s, y: " << y;
+    } else if (t >= prep_time + launch_time && t < prep_time + launch_time + fall_time) {
+        x = 0;
+        y = fall_extension;
+        CartesianToTheta(1.0);
+
+        // Use low stiffness and lots of damping to handle the fall
+        LegGain gains = {15.5, 0.00, 25.0, 0.00};
+        CommandAllLegs(gains);
+        // Serial << "Retract: +" << t << "s, y: " << y;
+    } else {
+        state = STOP;
+        printf("Jump Complete.");
+    }
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+

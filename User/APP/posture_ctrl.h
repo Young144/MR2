@@ -39,7 +39,8 @@ enum States {
     WALK_LEFT=10,
     WALK_RIGHT=11,
     ROTAT_LEFT=12,
-    ROTAT_RIGHT=13
+    ROTAT_RIGHT=13,
+		JUMP=14
 };
 extern enum States state;
 
