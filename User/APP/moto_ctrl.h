@@ -18,6 +18,6 @@ typedef struct
 
 
 extern bool IsMotoReadyOrNot;
-
+extern float ref_agle[8];
 extern temp_data temp_pid;
 #endif

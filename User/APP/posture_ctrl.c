@@ -21,8 +21,9 @@ void StartJump(float start_time_s);
 void TrajectoryJump(float t, float launchTime, float stanceHeight, float downAMP) ;
 void ExecuteJump();
 
-
-static float x, y, theta1, theta2;
+void StartPosToMiddlePos (void);
+void MiddlePosToEndPos (void);
+float x, y, theta1, theta2, testtheta;
 
 enum States state = STOP;
 
@@ -36,42 +37,42 @@ LegGain state_gait_gains[] = {
     //{kp_spd, kd_spd, kp_pos, kd_pos}
     {15.5, 0.00, 25.0, 0.00}, // STOP
     {15.5, 0.00, 25.0, 0.00}, // PRONK
-    {15.5, 0.00, 25.0, 0.00},// TROT
+    {15.5, 0.00, 25.0, 0.00},	// TROT
     {15.5, 0.00, 25.0, 0.00}, // PACE
     {15.5, 0.00, 25.0, 0.00}, // BOUND
-    {15.5, 0.00, 25.0, 0.00}, // GALLOP
-    {15.5, 0.00, 25.0, 0.00}, // WALK
-    {15.5, 0.00, 25.0, 0.00}, // ROTATE
-    {15.5, 0.00, 25.0, 0.00}, // WALK		ahead
-    {15.5, 0.00, 25.0, 0.00}, // WALK		back
-    {15.5, 0.00, 25.0, 0.00}, // WALK		left
-    {15.5, 0.00, 25.0, 0.00}, // WALK		right
-    {15.5, 0.00, 25.0, 0.00}, // ROTATE		left
-    {15.5, 0.00, 25.0, 0.00}, // ROTATE		right
+
+    {15.5, 0.00, 25.0, 0.00}, // WALK AHEAD
+    {15.5, 0.00, 25.0, 0.00}, // WALK BACK
+    {15.5, 0.00, 25.0, 0.00}, // WALK LEFT
+    {15.5, 0.00, 25.0, 0.00}, // WALK RIGHT
+    {15.5, 0.00, 25.0, 0.00}, // ROTATE LEFT
+    {15.5, 0.00, 25.0, 0.00}, // ROTATE RIGHT
     {15.5, 0.00, 25.0, 0.00}, // JUMP
 };
 //设定每一种步态的具体参数
 GaitParams state_gait_params[] = {
-    //{stance_height,step_length,up_amp,down_amp,flight_percent,freq}  cm
+    //{stance_height, step_length, up_amp, down_amp, flight_percent, freq}  cm
+    //{步高, 步长, (上)抬腿高, (下)下压腿高度, 飞行时间占比, 频率}	单位 cm
     {NAN, NAN, NAN, NAN, NAN, NAN}, // STOP
+		{NAN, NAN, NAN, NAN, NAN, NAN}, // RELASE
     {16.0, 0.00, 0.00, 5.00, 0.75, 1.0}, // PRONK		//单拍步态 四足跳跃
-    {16.0, 15.0, 5.00, 2.00, 0.25, 2.0}, // TROT		//双拍步态 对角小跑
+		
+    {16.0, 15.0, 5.00, 2.00, 0.25, 2.3}, // TROT		//双拍步态 对角小跑
+		
     {17.3, 15.0, 6.00, 4.00, 0.35, 2.0}, // PACE		//双拍步态 同侧溜步
     {17.3, 0.00, 5.00, 4.00, 0.35, 2.5}, // BOUND		//双拍步态 跳跑
-    {17.3, 0.00, 6.00, 4.00, 0.35, 2.0}, // GALLOP		//准两拍步态 跳跃
 
-    {15.3, 0.00, 5.0, 0.00, 0.10, 1.5}, // WALK		//四拍步态 单步行走
-    {17.3, 10.0, 4.0, 0.00, 0.35, 2.0}, // ROTATE		//旋转
-
-    {16.0, 16.00, 5.0, 0.00, 0.20, 2.0}, // WALK		ahead
-    {15.0, 6.00, 4.0, 0.00, 0.25, 2.0}, // WALK		back
-
-    {17.3, 10.0, 6.0, 0.00, 0.35, 2.0}, // WALK		left
-    {17.3, 10.0, 6.0, 0.00, 0.35, 2.0}, // WALK		right
-
-    {15.3, 12.00, 5.0, 0.00, 0.25, 2.5}, // ROTATE		left
-    {15.3, 12.00, 5.0, 0.00, 0.25, 2.5}, // ROTATE		right
-    {NAN, NAN, NAN, NAN, NAN, NAN} // JUMP
+    {20.3, 16.0, 8.00, 0.00, 0.20, 2.2}, // WALK AHEAD
+    {15.0, 6.00, 4.00, 0.00, 0.25, 0.5}, // WALK BACK
+		
+    {17.3, 10.0, 6.00, 0.00, 0.35, 2.0}, // WALK LEFT
+    {17.3, 10.0, 6.00, 0.00, 0.35, 2.0}, // WALK RIGHT
+		
+    {17.3, 12.0, 5.00, 0.00, 0.25, 2.3}, // ROTATE LEFT
+    {17.3, 12.0, 5.00, 0.00, 0.25, 2.3}, // ROTATE RIGHT
+    {NAN, NAN, NAN, NAN, NAN, NAN}, // JUMP
+		{NAN, NAN, NAN, NAN, NAN, NAN}, // START
+		{NAN, NAN, NAN, NAN, NAN, NAN} // END
 };
 
 /**
@@ -79,6 +80,7 @@ GaitParams state_gait_params[] = {
 *	效果不错{14.0, 12.0, 3.5, 0.00, 0.50, 1.0},
 *	{16.0, 12.00, 5.0, 0.00, 0.20, 2.0}, // WALK		ahead 不错
 *	{17.3, 12.00, 4.0, 0.00, 0.35, 2.5}, // WALK		ahead
+* 对角小跑步态不错速度和稳定都非常好
 */
 
 GaitParams gait_params_1 = {16.0, 16.00, 5.0, 0.00, 0.50, 2.0};
@@ -92,16 +94,25 @@ GaitParams gait_params_2 = {16.0, 16.00, 5.0, 0.00, 0.20, 2.0};
  *******************************************************************************************/
 void PostureControl_task(void *pvParameters)
 {
+
+
+
     for(;;)
     {
         GaitParams gait_params = state_gait_params[state];
-        LegGain gait_gains =state_gait_gains[state] ;
+        // LegGain gait_gains =state_gait_gains[state] ;
         switch(state) {
         case STOP:		//停止
+
+
             x=0;
             y = 17.3205081;
             CartesianToTheta(1.0);
             CommandAllLegs(gait_gains);
+
+            break;
+        case REALSE:		// 释放 什么都不做
+            break;
             // vTaskDelay(10);
             //printf("\r\n x=%f  y=%f  theta1=%f  theta2=%f   he=%f ",x,y,theta1,theta2,theta1+theta2);
             break;
@@ -116,17 +127,6 @@ void PostureControl_task(void *pvParameters)
             break;
         case BOUND:		//双拍步态 跳跑
             gait(gait_params, gait_gains, 0.0, 0.0, 0.5, 0.5, 1.0, 1.0, 1.0, 1.0);
-            break;
-        case GALLOP:	//准两拍步态 跳跃
-            gait(gait_params, gait_gains, 0.0, 0.1, 0.5, 0.6, 1.0, 1.0, 1.0, 1.0);
-            break;
-        case WALK:		//四拍步态 单步行走
-            gait(gait_params, gait_gains, 0.0, 0.5, 0.75, 0.25, 1.0, 1.0, 1.0, 1.0);
-            //	printf("\r\n x=%f  y=%f  theta1=%f  theta2=%f   he=%f ",x,y,theta1,theta2,theta1+theta2);
-            break;
-        case ROTATE:	//旋转
-            gait(gait_params, gait_gains, 0.0, 0.5, 0.75, 0.25, -1.0, -1.0, -1.0, -1.0);
-            //	printf("\r\n x=%f  y=%f  theta1=%f  theta2=%f   he=%f ",x,y,theta1,theta2,theta1+theta2);
             break;
         case WALK_AHEAD:		//前进
             gait(gait_params, gait_gains, 0.0, 0.5, 0.75, 0.25, 1.0, 1.0, 1.0, 1.0);
@@ -149,9 +149,15 @@ void PostureControl_task(void *pvParameters)
         case JUMP:		//跳跃
             ExecuteJump();
             break;
-
+        case START:		//
+            StartPosToMiddlePos();
+            break;
+				 case END:		//
+            MiddlePosToEndPos();
+            break;
+				 
         }
-
+        vTaskDelay(1);
     }
 }
 
@@ -196,6 +202,7 @@ void gait(	GaitParams params,LegGain gains,
     float t = times/1000.0;
 
     //printf("\r\n t=%f",t);
+
     // const float leg0_direction = 1.0;
     CoupledMoveLeg( t, params, leg0_offset, leg0_direction, 0);
 
@@ -209,7 +216,7 @@ void gait(	GaitParams params,LegGain gains,
     CoupledMoveLeg( t, params, leg3_offset, leg3_direction, 3);
 
     //改变PD
-    ChangeTheGainsOfPD(gains);
+    // ChangeTheGainsOfPD(gains);
 }
 
 /**
@@ -232,6 +239,8 @@ void SinTrajectory (float t,GaitParams params, float gaitOffset) {
     static float p = 0;
     static float prev_t = 0;
 
+
+    //x=y=0;
     float stanceHeight = params.stance_height;
     float downAMP = params.down_amp;
     float upAMP = params.up_amp;
@@ -314,6 +323,7 @@ void CartesianToTheta(float leg_direction)
     A1=M-N;
 
     A2=M+N;
+
     if(leg_direction==1.0) {
         theta2=(A1-90.0);
         theta1=(A2-90.0);
@@ -321,6 +331,7 @@ void CartesianToTheta(float leg_direction)
         theta1=(A1-90.0);
         theta2=(A2-90.0);
     }
+
     //	printf("\r\n x=%f  y=%f  theta1=%f  theta2=%f   he=%f   L=%f  M=%lf  N=%f   SIXI=%f",x,y,theta1,theta2,theta1+theta2,L,M,N,(	(pow(L,2)+pow(L1,2)-pow(L2,2))/(2*L1*L)	));
 }
 
@@ -331,28 +342,29 @@ void CartesianToTheta(float leg_direction)
 void SetCoupledPosition( int LegId)
 {
     //限位保护
-    if((theta1+theta2)>170||(theta1+theta2)<-170||theta1>140||theta1<-140||theta2>140||theta2<-140)
+    if((theta1+theta2)>178||(theta1+theta2)<-178||theta1>150||theta1<-150||theta2>150||theta2<-150)
         vTaskSuspend(MotorControlTask_Handler);
 
     if(LegId==0)
     {
-        temp_pid.ref_agle[1]=-theta1*TransData;
-        temp_pid.ref_agle[0]=-theta2*TransData;
+        temp_pid.ref_agle[1]=-theta1*ReductionAndAngleRatio;
+        temp_pid.ref_agle[0]=-theta2*ReductionAndAngleRatio;
     }
     else if(LegId==1)
     {
-        temp_pid.ref_agle[2]=theta1*TransData;
-        temp_pid.ref_agle[3]=theta2*TransData;
+        temp_pid.ref_agle[2]=theta1*ReductionAndAngleRatio;
+        temp_pid.ref_agle[3]=theta2*ReductionAndAngleRatio;
     }
     else if(LegId==2)
     {
-        temp_pid.ref_agle[4]=-theta1*TransData;
-        temp_pid.ref_agle[5]=-theta2*TransData;
+        temp_pid.ref_agle[5]=-theta1*ReductionAndAngleRatio;
+        temp_pid.ref_agle[4]=-theta2*ReductionAndAngleRatio;
     }
     else if(LegId==3)
     {
-        temp_pid.ref_agle[6]=theta1*TransData;
-        temp_pid.ref_agle[7]=theta2*TransData;
+        temp_pid.ref_agle[6]=theta1*ReductionAndAngleRatio;
+        temp_pid.ref_agle[7]=theta2*ReductionAndAngleRatio;
+
     }
 
     IsMotoReadyOrNot= IsReady;		//数据填充完毕
@@ -421,8 +433,8 @@ bool IsValidLegGain( LegGain gains) {
  * @return       True if valid gains, false if invalid
  */
 bool IsValidGaitParams( GaitParams params) {
-    const float maxL = 29.8;
-    const float minL = 10.1;
+    const float maxL = 29.3;
+    const float minL = 10.2;
 
     float stanceHeight = params.stance_height;
     float downAMP = params.down_amp;
@@ -468,7 +480,7 @@ bool IsValidGaitParams( GaitParams params) {
  */
 void ChangeTheGainsOfPD(LegGain gains)
 {
-    uint8_t count=0;
+    static uint8_t count=0;
     if(count>=1) {
 
     } else {
@@ -560,9 +572,133 @@ void ExecuteJump() {
 
 }
 
+void StartPosToMiddlePos (void)
+{
+state = REALSE;
+
+
+    for (int i = 0; i < 8; i++) {
+        pid_reset_kpkd(&pid_pos[i], 45.0, 0);
+        pid_reset_kpkd(&pid_spd[i], 15.5f, 0);
+    }
+    testtheta=95.0;
+    temp_pid.ref_agle[0]-=testtheta*ReductionAndAngleRatio;
+    temp_pid.ref_agle[1]+=testtheta*ReductionAndAngleRatio;
+    temp_pid.ref_agle[2]-=testtheta*ReductionAndAngleRatio;
+    temp_pid.ref_agle[3]+=testtheta*ReductionAndAngleRatio;
+    temp_pid.ref_agle[4]-=testtheta*ReductionAndAngleRatio;
+    temp_pid.ref_agle[5]+=testtheta*ReductionAndAngleRatio;
+    temp_pid.ref_agle[6]-=testtheta*ReductionAndAngleRatio;
+    temp_pid.ref_agle[7]+=testtheta*ReductionAndAngleRatio;
+    IsMotoReadyOrNot= IsReady;		//数据填充完毕
+
+    vTaskDelay(2000);
 
 
 
+    for (int i = 0; i < 8; i++) {
+        pid_reset_kpkd(&pid_pos[i], 28.0, 0);
+        pid_reset_kpkd(&pid_spd[i], 15.5f, 0);
+    }
+    testtheta=-5.0;
+    temp_pid.ref_agle[0]-=testtheta*ReductionAndAngleRatio;
+    temp_pid.ref_agle[1]+=testtheta*ReductionAndAngleRatio;
+    temp_pid.ref_agle[2]-=testtheta*ReductionAndAngleRatio;
+    temp_pid.ref_agle[3]+=testtheta*ReductionAndAngleRatio;
+    temp_pid.ref_agle[4]-=testtheta*ReductionAndAngleRatio;
+    temp_pid.ref_agle[5]+=testtheta*ReductionAndAngleRatio;
+    temp_pid.ref_agle[6]-=testtheta*ReductionAndAngleRatio;
+    temp_pid.ref_agle[7]+=testtheta*ReductionAndAngleRatio;
+    IsMotoReadyOrNot= IsReady;		//数据填充完毕
+
+    vTaskDelay(1000);
+		
+		
+    for (int i = 0; i < 8; i++) {
+        pid_reset_kpkd(&pid_pos[i], 20.0, 0);
+        pid_reset_kpkd(&pid_spd[i], 15.5f, 0);
+    }
+    testtheta=85.0;
+    temp_pid.ref_agle[0]+=testtheta*ReductionAndAngleRatio;
+    temp_pid.ref_agle[1]+=testtheta*ReductionAndAngleRatio;
+    temp_pid.ref_agle[2]-=testtheta*ReductionAndAngleRatio;
+    temp_pid.ref_agle[3]-=testtheta*ReductionAndAngleRatio;
+    temp_pid.ref_agle[4]+=testtheta*ReductionAndAngleRatio;
+    temp_pid.ref_agle[5]+=testtheta*ReductionAndAngleRatio;
+    temp_pid.ref_agle[6]-=testtheta*ReductionAndAngleRatio;
+    temp_pid.ref_agle[7]-=testtheta*ReductionAndAngleRatio;
+    IsMotoReadyOrNot= IsReady;		//数据填充完毕
+
+
+		vTaskDelay(1000);
+
+   // printf(" moto_chassis = %d   moto_chassis[1]  =%d    ref_agle %f\n",moto_chassis[0].total_angle,moto_chassis[7].total_angle,ref_agle[0]);
+
+    memset(&moto_chassis,0,sizeof(moto_measure_t)*8);
+
+    for(int i=0; i<8; i++)
+        temp_pid.ref_agle[i]=ref_agle[i]=0;
+
+    vTaskDelay(100);
+    //printf(" moto_chassis = %d   moto_chassis[1]  =%d  ref_agle %f\n",moto_chassis[0].total_angle,moto_chassis[7].total_angle,ref_agle[0]);
+
+    state = REALSE;
+
+    printf("Start Done.");
+
+
+}
+
+void MiddlePosToEndPos (void)
+{
+	state = REALSE;
+	   for (int i = 0; i < 8; i++) {
+        pid_reset_kpkd(&pid_pos[i], 24.0, 0);
+        pid_reset_kpkd(&pid_spd[i], 15.5f, 0);
+    }
+    testtheta=-85.0;
+    temp_pid.ref_agle[0]+=testtheta*ReductionAndAngleRatio;
+    temp_pid.ref_agle[1]+=testtheta*ReductionAndAngleRatio;
+    temp_pid.ref_agle[2]-=testtheta*ReductionAndAngleRatio;
+    temp_pid.ref_agle[3]-=testtheta*ReductionAndAngleRatio;
+    temp_pid.ref_agle[4]+=testtheta*ReductionAndAngleRatio;
+    temp_pid.ref_agle[5]+=testtheta*ReductionAndAngleRatio;
+    temp_pid.ref_agle[6]-=testtheta*ReductionAndAngleRatio;
+    temp_pid.ref_agle[7]-=testtheta*ReductionAndAngleRatio;
+    IsMotoReadyOrNot= IsReady;		//数据填充完毕
+
+
+		vTaskDelay(1000);
+		
+		  for (int i = 0; i < 8; i++) {
+        pid_reset_kpkd(&pid_pos[i], 15.0, 0);
+        pid_reset_kpkd(&pid_spd[i], 10.5f, 0);
+    }
+    testtheta=-90.0;
+    temp_pid.ref_agle[0]-=testtheta*ReductionAndAngleRatio;
+    temp_pid.ref_agle[1]+=testtheta*ReductionAndAngleRatio;
+    temp_pid.ref_agle[2]-=testtheta*ReductionAndAngleRatio;
+    temp_pid.ref_agle[3]+=testtheta*ReductionAndAngleRatio;
+    temp_pid.ref_agle[4]-=testtheta*ReductionAndAngleRatio;
+    temp_pid.ref_agle[5]+=testtheta*ReductionAndAngleRatio;
+    temp_pid.ref_agle[6]-=testtheta*ReductionAndAngleRatio;
+    temp_pid.ref_agle[7]+=testtheta*ReductionAndAngleRatio;
+    IsMotoReadyOrNot= IsReady;		//数据填充完毕
+
+    vTaskDelay(1000);
+	
+		
+		 memset(&moto_chassis,0,sizeof(moto_measure_t)*8);
+    for(int i=0; i<8; i++)
+        temp_pid.ref_agle[i]=ref_agle[i]=0;
+
+    vTaskDelay(100);
+		
+ state = REALSE;
+
+    printf("END Done.");
+
+}
 
 
 

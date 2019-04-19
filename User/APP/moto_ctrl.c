@@ -5,9 +5,9 @@ void send_chassis_cur1_4(int16_t motor1, int16_t motor2, int16_t motor3, int16_t
 void send_chassis_cur5_8(int16_t motor5, int16_t motor6, int16_t motor7, int16_t motor8);
 
 bool IsMotoReadyOrNot= NotReady;
-float ref_agle[8];
+float ref_agle[8]={0};
 float temp_angle;
-temp_data temp_pid;      //pid中间数据
+temp_data temp_pid={0};      //pid中间数据
 
 /*******************************************************************************************
 	*@ 函数名称：void MotorControl_task(void *pvParameters)
@@ -16,11 +16,6 @@ temp_data temp_pid;      //pid中间数据
  *******************************************************************************************/
 void MotorControl_task(void *pvParameters)
 {
-		BeginWarnBuzzer();
-    my_can_filter_init_recv_all(&hcan1);
-    HAL_CAN_Receive_IT(&hcan1, CAN_FIFO0);
-    HAL_CAN_Receive_IT(&hcan2, CAN_FIFO0);
-
     for(;;)
         moto_behaviour();
 }
@@ -43,8 +38,9 @@ void moto_behaviour(void)
         pid_calc(&pid_pos[i],moto_chassis[i].total_angle/100,ref_agle[i]/100);  //位置环 角度控制
         temp_pid.out[i] = pid_calc(&pid_spd[i],moto_chassis[i].speed_rpm,pid_pos[i].pos_out);  //速度环 速度控制
     }
+		
     send_chassis_cur1_4(temp_pid.out[0],temp_pid.out[1],temp_pid.out[2],temp_pid.out[3]);		//传递1-4数据给can收发器
-    send_chassis_cur5_8(temp_pid.out[4],temp_pid.out[5],temp_pid.out[6],temp_pid.out[7]);		//传递5-8数据给can收发器
+		send_chassis_cur5_8(temp_pid.out[4],temp_pid.out[5],temp_pid.out[6],temp_pid.out[7]);		//传递5-8数据给can收发器
 
     vTaskDelay(2);		//控制采样频率  实测给 1     7号和8号电机会失控
 

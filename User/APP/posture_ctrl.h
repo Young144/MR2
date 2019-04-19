@@ -6,9 +6,12 @@
 #define L1 10
 #define L2 20
 
-#define TransData 3591/187*8191/360
+#define ReductionAndAngleRatio 436.926337  //3591/187*8191/360=436.926337
 
-static float x, y, theta1, theta2;
+void StartPosToMiddlePos(void);
+
+
+extern float x, y, theta1, theta2;
 
 typedef struct
 {
@@ -27,20 +30,20 @@ extern Coordinate_Trans_Data coor_calc;
 
 enum States {
     STOP = 0,
-    PRONK = 1,
-    TROT = 2,
-    PACE = 3,
-    BOUND = 4,
-    GALLOP = 5,
-    WALK = 6,
-    ROTATE = 7,
-    WALK_AHEAD=8,
-    WALK_BACK=9,
-    WALK_LEFT=10,
-    WALK_RIGHT=11,
-    ROTAT_LEFT=12,
-    ROTAT_RIGHT=13,
-		JUMP=14
+		REALSE=1,
+    PRONK = 2,
+    TROT = 3,
+    PACE = 4,
+    BOUND = 5,
+    WALK_AHEAD=6,
+    WALK_BACK=7,
+    WALK_LEFT=8,
+    WALK_RIGHT=9,
+    ROTAT_LEFT=10,
+    ROTAT_RIGHT=11,
+		JUMP=12,
+		START=13,
+		END=14
 };
 extern enum States state;
 

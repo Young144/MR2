@@ -28,6 +28,7 @@ extern int temp;
  *******************************************************************************************/
 void Debug_task(void *pvParameters)
 {
+		BeginWarnBuzzer();
     for(;;)
         InterpretCommand();
 }
@@ -49,33 +50,44 @@ void InterpretCommand(void)
 //        case 'C' :				//C进入坐标位置控制模式
 //            coor_sort();
 //            break;
-					        case 'J':
+				case '0':
+            state = WALK_AHEAD;
+            break;
+        case '1':
+            state = WALK_BACK;
+            break;
+        case '2':
+            state = WALK_LEFT;
+            break;
+        case '3':
+            state = WALK_RIGHT;
+            break;
+        case '4':
+            state = ROTAT_LEFT;
+            break;
+        case '5':
+            state = ROTAT_RIGHT;
+            break;
+				
+				case 'J':
             state = JUMP;
             break;
         case 'S':
             state = STOP;
             break;
-        case '0':
+				
+        case '6':
             state = PRONK;
             break;
-        case '1':
+        case '7':
             state = TROT;
             break;
-        case '2':
+        case '8':
             state = PACE;
             break;
-        case '3':
+        case '9':
             state = BOUND;
-            break;
-        case '4':
-            state = GALLOP;
-            break;
-        case 'W':
-            state = WALK;
-            break;
-//        case 'R':
-//            state = ROTATE;
-//            break;
+            break;				
         case 'E':
             state = STOP;
 				vTaskDelay(100);
@@ -87,24 +99,19 @@ void InterpretCommand(void)
             vTaskResume(MotorControlTask_Handler);
             break;
             break;
-        case 'a':
-            state = WALK_AHEAD;
+				
+      case 'a':
+            state = START;
             break;
-        case 'b':
-            state = WALK_BACK;
+			
+			 case 'b':
+            state = END;
             break;
-        case 'c':
-            state = WALK_LEFT;
-            break;
-        case 'd':
-            state = WALK_RIGHT;
-            break;
-        case 'e':
-            state = ROTAT_LEFT;
-            break;
-        case 'f':
-            state = ROTAT_RIGHT;
-            break;
+			 
+			 
+			
+           
+				
         case 'm':
             Servo1_PEAK;
 //            TIM4->CCR1-=20;

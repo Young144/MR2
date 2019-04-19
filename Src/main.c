@@ -1,32 +1,32 @@
 
 #include "robocon.h"
 
-#define START_TASK_PRIO		1		//任务优先级
+#define START_TASK_PRIO		0		//任务优先级
 #define START_STK_SIZE 		128  		//任务堆栈大小	
 TaskHandle_t StartTask_Handler;		//任务句柄
 void start_task(void *pvParameters);		//任务函数
 
-#define MotorControl_TASK_PRIO		4		//任务优先级
+#define MotorControl_TASK_PRIO		2		//任务优先级
 #define MotorControl_STK_SIZE 		1024  //任务堆栈大小
 TaskHandle_t MotorControlTask_Handler;		//任务句柄
 void MotorControl_task(void *pvParameters);	//任务函数
 
-#define Debug_TASK_PRIO		5		//任务优先级
+#define Debug_TASK_PRIO		4		//任务优先级
 #define Debug_STK_SIZE 		512  //任务堆栈大小	
 TaskHandle_t DebugTask_Handler;		//任务句柄
 void Debug_task(void *pvParameters);		//任务函数
 
-#define PostureControl_TASK_PRIO		4		//任务优先级
+#define PostureControl_TASK_PRIO		2		//任务优先级
 #define PostureControl_STK_SIZE 		512 	 //任务堆栈大小	
 TaskHandle_t PostureControlTask_Handler;		//任务句柄
 void PostureControl_task(void *pvParameters);		//任务函数
 
-#define Detect_TASK_PRIO		4		//任务优先级
+#define Detect_TASK_PRIO		1		//任务优先级
 #define Detect_STK_SIZE 		128 	 //任务堆栈大小	
 TaskHandle_t DetectTask_Handler;		//任务句柄
 void Detect_task(void *pvParameters);		//任务函数
 
-#define TEST_TASK_PRIO		4		//任务优先级
+#define TEST_TASK_PRIO		2		//任务优先级
 #define TEST_STK_SIZE 		512 	 //任务堆栈大小	
 TaskHandle_t TestTask_Handler;		//任务句柄
 void Test_task(void *pvParameters);		//任务函数
@@ -54,6 +54,11 @@ int main(void)
     MX_NVIC_Init();				//中断优先级初始化
     //定时器时钟90M分频系数9000-1,定时器3的频率90M/9000=10K自动重装载10-1,定时器周期1ms
     TIM3_Init(10-1,9000-1);
+	
+	  my_can_filter_init_recv_all(&hcan1);
+    HAL_CAN_Receive_IT(&hcan1, CAN_FIFO0);
+    HAL_CAN_Receive_IT(&hcan2, CAN_FIFO0);
+
 
     moto_param_init();		//电机PID参数初始化
     buzzer_init(500-1, 90-1);//蜂鸣器初始化
@@ -63,8 +68,7 @@ int main(void)
 
     Servo1_TEST_POSITION;
     Servo2_TEST_POSITION;
-    printf("system init\r\n");
-
+		printf("\r\n/*************SYSTEM INIT SUCCESS****************/ \r\n");
     //创建开始任务
     xTaskCreate((TaskFunction_t )start_task,            //任务函数
                 (const char*    )"start_task",          //任务名称
@@ -109,35 +113,43 @@ void start_task(void *pvParameters)
                 (void*          )NULL,
                 (UBaseType_t    )Detect_TASK_PRIO,
                 (TaskHandle_t*  )&DetectTask_Handler);
-    //创建Test任务
-    xTaskCreate((TaskFunction_t )Test_task,
-                (const char*    )"Test_task",
-                (uint16_t       )TEST_STK_SIZE,
-                (void*          )NULL,
-                (UBaseType_t    )TEST_TASK_PRIO,
-                (TaskHandle_t*  )&TestTask_Handler);
-    //创建VcanGC任务
-    xTaskCreate((TaskFunction_t )VcanGC_task,
-                (const char*    )"VcanGC_task",
-                (uint16_t       )VcanGC_STK_SIZE,
-                (void*          )NULL,
-                (UBaseType_t    )VcanGC_TASK_PRIO,
-                (TaskHandle_t*  )&VcanGCTask_Handler);
 
+    //创建VcanGC任务
+//    xTaskCreate((TaskFunction_t )VcanGC_task,
+//                (const char*    )"VcanGC_task",
+//                (uint16_t       )VcanGC_STK_SIZE,
+//                (void*          )NULL,
+//                (UBaseType_t    )VcanGC_TASK_PRIO,
+//                (TaskHandle_t*  )&VcanGCTask_Handler);
+
+								    //创建Test任务
+//    xTaskCreate((TaskFunction_t )Test_task,
+//                (const char*    )"Test_task",
+//                (uint16_t       )TEST_STK_SIZE,
+//                (void*          )NULL,
+//                (UBaseType_t    )TEST_TASK_PRIO,
+//                (TaskHandle_t*  )&TestTask_Handler);
+//								
+								
+								
     vTaskDelete(StartTask_Handler); //删除开始任务
     taskEXIT_CRITICAL();            //退出临界区
 
 }
 uint32_t Timetick1ms = 0;
 
+int count=0;
 
 void Test_task(void *pvParameters)
 {
 
-    int count=0;
-
     for(;;) {
+		
+//vTaskDelay(1000);
+//StartPosToMiddlePos();
+//	
 
+//	printf(" yes  \n");
 //	mpu_get_data();
 //	imu_ahrs_update();
 //	imu_attitude_update();
@@ -147,12 +159,19 @@ void Test_task(void *pvParameters)
 //	HAL_Delay(5);
 //
 //	Servo_DOWN;
-
-//		wave_form_data[0] =count;
 //		wave_form_data[1] =count;
 //		wave_form_data[2] =count;
+//    temp_pid.ref_agle[0]-=30.0f*ReductionAndAngleRatio;
+//    temp_pid.ref_agle[1]+=30.0f*ReductionAndAngleRatio;
+//			
+			
+//			temp_pid.ref_agle[0]=count*TransData;
 //		count+=10;
-//    vTaskDelay(500);
+//			if(count>=50)
+//			{count=0;}
+//    
+//	printf(" ref_agle[0]  = %f   ref_agle[1]  =%f  \n",temp_pid.ref_agle[0],temp_pid.ref_agle[1]);			
+//					printf(" theat1  = %f   theat2  =%f  \n",theta1,theta2);			
 //
 //
 //		Servo_PEAK;
