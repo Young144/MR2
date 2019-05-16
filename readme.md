@@ -25,8 +25,8 @@
 
 
 ##d-2019.4.20
-*增加combination.c将组合动作移到这里来写
-*增加navigation.c 实现了机器人定向行走
+ *增加combination.c将组合动作移到这里来写
+ *增加navigation.c 实现了机器人定向行走
 
 
 ##d-2019.4.17
