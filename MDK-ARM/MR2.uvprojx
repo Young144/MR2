@@ -553,6 +553,11 @@
           <GroupName>Application/MDK-ARM</GroupName>
           <Files>
             <File>
+              <FileName>stm32f4xx_hal_timebase_TIM.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Src\stm32f4xx_hal_timebase_TIM.c</FilePath>
+            </File>
+            <File>
               <FileName>startup_stm32f427xx.s</FileName>
               <FileType>2</FileType>
               <FilePath>startup_stm32f427xx.s</FilePath>
@@ -571,11 +576,6 @@
               <FileName>dma.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Src\dma.c</FilePath>
-            </File>
-            <File>
-              <FileName>stm32f4xx_hal_timebase_TIM.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\Src\stm32f4xx_hal_timebase_TIM.c</FilePath>
             </File>
             <File>
               <FileName>gpio.c</FileName>
@@ -603,9 +603,9 @@
               <FilePath>../Src/main.c</FilePath>
             </File>
             <File>
-              <FileName>posture_ctrl.c</FileName>
+              <FileName>debug.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\APP\posture_ctrl.c</FilePath>
+              <FilePath>..\User\APP\debug.c</FilePath>
             </File>
             <File>
               <FileName>moto_ctrl.c</FileName>
@@ -613,20 +613,40 @@
               <FilePath>..\User\APP\moto_ctrl.c</FilePath>
             </File>
             <File>
-              <FileName>debug.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\APP\debug.c</FilePath>
-            </File>
-            <File>
               <FileName>detect_task.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\APP\detect_task.c</FilePath>
+            </File>
+            <File>
+              <FileName>remote_control.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\APP\remote_control.c</FilePath>
+            </File>
+            <File>
+              <FileName>posture_ctrl.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\APP\posture_ctrl.c</FilePath>
+            </File>
+            <File>
+              <FileName>combinations.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\APP\combinations.c</FilePath>
+            </File>
+            <File>
+              <FileName>navigation.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\APP\navigation.c</FilePath>
             </File>
           </Files>
         </Group>
         <Group>
           <GroupName>AHRS</GroupName>
           <Files>
+            <File>
+              <FileName>mti30.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\AHRS\mti30.c</FilePath>
+            </File>
             <File>
               <FileName>imu.c</FileName>
               <FileType>1</FileType>
@@ -638,9 +658,9 @@
           <GroupName>BSP</GroupName>
           <Files>
             <File>
-              <FileName>pid.c</FileName>
+              <FileName>bsp_uart.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\BSP\pid.c</FilePath>
+              <FilePath>..\User\BSP\bsp_uart.c</FilePath>
             </File>
             <File>
               <FileName>bsp_can.c</FileName>
@@ -651,6 +671,11 @@
               <FileName>vcan.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\BSP\vcan.c</FilePath>
+            </File>
+            <File>
+              <FileName>pid.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\BSP\pid.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -663,14 +688,14 @@
               <FilePath>..\User\HARDWARE\buzzer.c</FilePath>
             </File>
             <File>
-              <FileName>led.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\HARDWARE\led.c</FilePath>
-            </File>
-            <File>
               <FileName>servo.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\HARDWARE\servo.c</FilePath>
+            </File>
+            <File>
+              <FileName>led.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\HARDWARE\led.c</FilePath>
             </File>
           </Files>
         </Group>

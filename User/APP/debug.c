@@ -9,14 +9,6 @@ int16_t	Real_Number[20];		//用ascii码算出相应位中的真实数值 0-9对应48-57
 
 int8_t Abs_Pos;		//数据的绝对位置
 uint8_t act_flag=0 ;
-extern TaskHandle_t MotorControlTask_Handler;
-
-void InterpretCommand(void);
-void debug_sort(void);
-float decimal_converter(void)	 ;
-uint16_t get_result_digitals(void);
-
-extern int temp;
 
 
 /*******************************************************************************************
@@ -28,7 +20,7 @@ extern int temp;
  *******************************************************************************************/
 void Debug_task(void *pvParameters)
 {
-		BeginWarnBuzzer();
+
     for(;;)
         InterpretCommand();
 }
@@ -39,150 +31,256 @@ void Debug_task(void *pvParameters)
 */
 void InterpretCommand(void)
 {
-    if(USART_RX_STA&0x8000)		//是否全部接收完成
+    switch(usart2_buf[0])
     {
-        len=USART_RX_STA&0x3fff;//得到此次接收到的数据长度
-        switch(USART_RX_BUF[0])
-        {
-//        case 'p' :				//P进入位置控制模式
-//            debug_sort();
+    /*************************************************步态参数选择区*************************************************/
+    case 0x01:
+        state = WALK_AHEAD;
+        printf("\r\n**********state = WALK_AHEAD**********\r\n");
+        break;
+    case 0x02:
+        state = WALK_BACK;
+        printf("\r\n**********state = WALK_BACK**********\r\n");
+        break;
+    case 0x03:
+        state = WALK_LEFT;
+        printf("\r\n**********state = WALK_LEFT**********\r\n");
+        break;
+    case 0x04:
+        state = WALK_RIGHT;
+        printf("\r\n**********state = WALK_RIGHT**********\r\n");
+        break;
+    case 0x05:
+        state = ROTAT_LEFT;
+        printf("\r\n**********state = ROTAT_LEFT**********\r\n");
+        break;
+    case 0x06:
+        state = ROTAT_RIGHT;
+        printf("\r\n**********state = ROTAT_RIGHT**********\r\n");
+        break;
+    case 0x07:
+        break;
+    case 0x08:
+        state = TROT;
+        printf("\r\n**********state = TROT**********\r\n");
+        break;
+    case 0x09:
+        break;
+//    case 0x0a:
+//        state = BOUND;
+//        printf("\r\n**********state = BOUND**********\r\n");
+//        break;
+    case 0x0b:
+        //  state = TEST;
+        printf("\r\n**********state = TEST**********\r\n");
+        break;
+    case 0x0c:
+        state = STOP;
+        printf("\r\n**********state = STOP**********\r\n");
+        break;
+    case 0x0d:
+        StartJump(times/1000.0f);
+        printf("JUMP");
+        break;
+    case 0x0e:
+        state = START;
+        break;
+    case 0x0f:
+        state = END;
+        break;
+
+    /*************************************************步态参数调试区*************************************************/
+    case 0x10:
+        state_detached_params[state].detached_params_0.stance_height+=1;
+        state_detached_params[state].detached_params_2.stance_height+=1;
+        state_detached_params[state].detached_params_1.stance_height+=1;
+        state_detached_params[state].detached_params_3.stance_height+=1;
+        break;
+    case 0x11:
+        state_detached_params[state].detached_params_0.stance_height-=1;
+        state_detached_params[state].detached_params_2.stance_height-=1;
+        state_detached_params[state].detached_params_1.stance_height-=1;
+        state_detached_params[state].detached_params_3.stance_height-=1;
+        break;
+    case 0x12:
+        state_detached_params[state].detached_params_0.step_length+=1;
+        state_detached_params[state].detached_params_2.step_length+=1;
+        state_detached_params[state].detached_params_1.step_length+=1;
+        state_detached_params[state].detached_params_3.step_length+=1;
+        break;
+    case 0x13:
+        state_detached_params[state].detached_params_0.step_length-=1;
+        state_detached_params[state].detached_params_2.step_length-=1;
+        state_detached_params[state].detached_params_1.step_length-=1;
+        state_detached_params[state].detached_params_3.step_length-=1;
+        break;
+    case 0x14:
+        state_detached_params[state].detached_params_0.up_amp+=1;
+        state_detached_params[state].detached_params_2.up_amp+=1;
+        state_detached_params[state].detached_params_1.up_amp+=1;
+        state_detached_params[state].detached_params_3.up_amp+=1;
+        break;
+    case 0x15:
+        state_detached_params[state].detached_params_0.up_amp-=1;
+        state_detached_params[state].detached_params_2.up_amp-=1;
+        state_detached_params[state].detached_params_1.up_amp-=1;
+        state_detached_params[state].detached_params_3.up_amp-=1;
+        break;
+    case 0x16:
+        state_detached_params[state].detached_params_0.flight_percent+=0.01;
+        state_detached_params[state].detached_params_2.flight_percent+=0.01;
+        state_detached_params[state].detached_params_1.flight_percent+=0.01;
+        state_detached_params[state].detached_params_3.flight_percent+=0.01;
+        break;
+    case 0x17:
+        state_detached_params[state].detached_params_0.flight_percent-=0.01;
+        state_detached_params[state].detached_params_2.flight_percent-=0.01;
+        state_detached_params[state].detached_params_1.flight_percent-=0.01;
+        state_detached_params[state].detached_params_3.flight_percent-=0.01;
+        break;
+    case 0x18:
+        state_detached_params[state].detached_params_0.freq+=0.1;
+        state_detached_params[state].detached_params_2.freq+=0.1;
+        state_detached_params[state].detached_params_1.freq+=0.1;
+        state_detached_params[state].detached_params_3.freq+=0.1;
+        break;
+    case 0x19:
+        state_detached_params[state].detached_params_0.freq-=0.1;
+        state_detached_params[state].detached_params_2.freq-=0.1;
+        state_detached_params[state].detached_params_1.freq-=0.1;
+        state_detached_params[state].detached_params_3.freq-=0.1;
+        break;
+    case 0x26:
+        state_detached_params[state].detached_params_0.down_amp+=1;
+        state_detached_params[state].detached_params_2.down_amp+=1;
+        state_detached_params[state].detached_params_1.down_amp+=1;
+        state_detached_params[state].detached_params_3.down_amp+=1;
+        break;
+    case 0x27:
+        state_detached_params[state].detached_params_0.down_amp-=1;
+        state_detached_params[state].detached_params_2.down_amp-=1;
+        state_detached_params[state].detached_params_1.down_amp-=1;
+        state_detached_params[state].detached_params_3.down_amp-=1;
+        break;
+
+    /******************************************************END******************************************************/
+
+    /*************************************************舵机调试区*************************************************/
+
+    case 0x20:
+        TIM4->CCR1+=20;
+        break;
+    case 0x21:
+        TIM4->CCR1-=20;
+        break;
+    case 0x22:
+        TIM4->CCR2+=20;
+        break;
+    case 0x23:
+        TIM4->CCR2-=20;
+        break;
+    case 0x24:
+        TIM4->CCR3+=20;
+        break;
+    case 0x25:
+        TIM4->CCR3-=20;
+        break;
+
+
+//        case 'E':
+//            state = STOP;
+//            vTaskDelay(100);
+//            vTaskSuspend(MotorControlTask_Handler);
 //            break;
-//        case 'C' :				//C进入坐标位置控制模式
-//            coor_sort();
+//        case 'R':
+//            state = STOP;
+//            vTaskDelay(100);
+//            vTaskResume(MotorControlTask_Handler);
 //            break;
-				case '0':
-            state = WALK_AHEAD;
-            break;
-        case '1':
-            state = WALK_BACK;
-            break;
-        case '2':
-            state = WALK_LEFT;
-            break;
-        case '3':
-            state = WALK_RIGHT;
-            break;
-        case '4':
-            state = ROTAT_LEFT;
-            break;
-        case '5':
-            state = ROTAT_RIGHT;
-            break;
-				
-				case 'J':
-            state = JUMP;
-            break;
-        case 'S':
-            state = STOP;
-            break;
-				
-        case '6':
-            state = PRONK;
-            break;
-        case '7':
-            state = TROT;
-            break;
-        case '8':
-            state = PACE;
-            break;
-        case '9':
-            state = BOUND;
-            break;				
-        case 'E':
-            state = STOP;
-				vTaskDelay(100);
-            vTaskSuspend(MotorControlTask_Handler);
-            break;
-        case 'R':
-            state = STOP;
-				vTaskDelay(100);
-            vTaskResume(MotorControlTask_Handler);
-            break;
-            break;
-				
-      case 'a':
-            state = START;
-            break;
-			
-			 case 'b':
-            state = END;
-            break;
-			 
-			 
-			
-           
-				
-        case 'm':
-            Servo1_PEAK;
-//            TIM4->CCR1-=20;
-//				printf("\r\n CCR1 %d  CCR2 %d \r\n",(int)TIM4->CCR1,(int)TIM4->CCR2);
-            break;
-        case 'n':
-            Servo1_DOWN;
+//
+//        case 'm':
+//            Servo1_PEAK;
+////            TIM4->CCR1-=20;
+////				printf("\r\n CCR1 %d  CCR2 %d \r\n",(int)TIM4->CCR1,(int)TIM4->CCR2);
+//            break;
+//        case 'n':
+//            Servo1_DOWN;
+////            TIM4->CCR1+=20;
+////				printf("\r\n CCR1 %d  CCR2 %d \r\n",(int)TIM4->CCR1,(int)TIM4->CCR2);
+//            break;
+//        case 'k':
+//            Servo2_PEAK_POS;
+////            TIM4->CCR2-=20;
+////				printf("\r\n CCR1 %d  CCR2 %d \r\n",(int)TIM4->CCR1,(int)TIM4->CCR2);
+//            break;
+//        case 'l':
+//            Servo2_DOWN_POS;
+////            TIM4->CCR2+=20;
+////				printf("\r\n CCR1 %d  CCR2 %d \r\n",(int)TIM4->CCR1,(int)TIM4->CCR2);
+//            break;
+
+//        case 'z':
+
 //            TIM4->CCR1+=20;
-//				printf("\r\n CCR1 %d  CCR2 %d \r\n",(int)TIM4->CCR1,(int)TIM4->CCR2);
-            break;
-        case 'k':
-            Servo2_PEAK_POS;
-//            TIM4->CCR2-=20;
-//				printf("\r\n CCR1 %d  CCR2 %d \r\n",(int)TIM4->CCR1,(int)TIM4->CCR2);
-            break;
-        case 'l':
-            Servo2_DOWN_POS;
+//            printf("\r\n CCR1 %d  CCR2 %d \r\n",(int)TIM4->CCR1,(int)TIM4->CCR2);
+//            break;
+//        case 'x':
+
+//            TIM4->CCR1-=20;
+//            printf("\r\n CCR1 %d  CCR2 %d \r\n",(int)TIM4->CCR1,(int)TIM4->CCR2);
+//            break;
+//        case 'v':
+
 //            TIM4->CCR2+=20;
-//				printf("\r\n CCR1 %d  CCR2 %d \r\n",(int)TIM4->CCR1,(int)TIM4->CCR2);
-            break;
+//            printf("\r\n CCR1 %d  CCR2 %d \r\n",(int)TIM4->CCR1,(int)TIM4->CCR2);
+//            break;
+//        case 'y':
 
-        case 'z':
+//            TIM4->CCR2-=20;
+//            printf("\r\n CCR1 %d  CCR2 %d \r\n",(int)TIM4->CCR1,(int)TIM4->CCR2);
 
-            TIM4->CCR1+=20;
-            printf("\r\n CCR1 %d  CCR2 %d \r\n",(int)TIM4->CCR1,(int)TIM4->CCR2);
-            break;
-        case 'x':
+//            break;
 
-            TIM4->CCR1-=20;
-            printf("\r\n CCR1 %d  CCR2 %d \r\n",(int)TIM4->CCR1,(int)TIM4->CCR2);
-            break;
-        case 'v':
+//        default :
+//            //printf("\r\n%d	%d	%d	%d     %d \r\n",USART_RX_BUF[0],USART_RX_BUF[1],USART_RX_BUF[2],USART_RX_BUF[3],len);
+//           // printf("\r\n  Unknown command   \r\n");
+//            break;
 
-            TIM4->CCR2+=20;
-            printf("\r\n CCR1 %d  CCR2 %d \r\n",(int)TIM4->CCR1,(int)TIM4->CCR2);
-            break;
-        case 'y':
-
-            TIM4->CCR2-=20;
-            printf("\r\n CCR1 %d  CCR2 %d \r\n",(int)TIM4->CCR1,(int)TIM4->CCR2);
-
-            break;
-        default :
-            //printf("\r\n%d	%d	%d	%d     %d \r\n",USART_RX_BUF[0],USART_RX_BUF[1],USART_RX_BUF[2],USART_RX_BUF[3],len);
-            printf("\r\n  Unknown command   \r\n");
-            break;
-
-            //vTaskDelay(20);
-        }
-
-        while(__HAL_UART_GET_FLAG(&huart2,UART_FLAG_TC)!=SET);		//等待发送结束
-        printf("\r\n/*************收到命令****************/\r\n");//插入换行
-
-        for(int i=0 ; i<len; i++)
-            USART_RX_BUF[i]=0;
-
-        USART_RX_STA=0;
-
-    } else
-    {
-        time++;
-        if(time%4000==0)
-        {
-            printf("\r\n/*************HBUT ROBOCON 2019 调试模式****************/ \r\n");
-            //  printf("命令格式  s速度   p位置  注意无空格 \r\n\r\n\r\n");
-        }
-        // if(time%5000==0)printf("等待命令...\r\n");
-        vTaskDelay(10);
+        //vTaskDelay(20);
     }
+    //usart2_buf[0]=0;
+    //while(__HAL_UART_GET_FLAG(&huart2,UART_FLAG_TC)!=SET);		//等待发送结束
+    // printf("\r\n/*************收到命令****************/\r\n");//插入换行
+
+//        for(int i=0 ; i<len; i++)
+//            USART_RX_BUF[i]=0;
+
+//        USART_RX_STA=0;
+    memset(&usart2_buf,0,sizeof(usart2_buf));//清除usart2buff里面的数据
+    vTaskDelay(200);
+//    } else
+//    {
+//        time++;
+//        if(time%4000==0)
+//        {
+//            printf("\r\n/*************HBUT ROBOCON 2019 调试模式****************/ \r\n");
+//            //  printf("命令格式  s速度   p位置  注意无空格 \r\n\r\n\r\n");
+//        }
+//        if(time%100==0)
+//        {
+//            // printf(" 步高 %2.1f  步长% 2.1f  抬腿高 %2.1f  压腿高 %2.1f  飞行占比 %2.2f  频率% 2.1f\r\n",test_gait_params.stance_height,test_gait_params.step_length,test_gait_params.up_amp,test_gait_params.down_amp,test_gait_params.flight_percent,test_gait_params.freq);
+
+//        }
+//        vTaskDelay(10);
+//    }
 
 }
+
+
+
+
+
+
 
 /**
 * NAME: void coor_sort(void)

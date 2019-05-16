@@ -13,8 +13,52 @@ TIM_HandleTypeDef htim5;
 TIM_HandleTypeDef htim8;
 TIM_HandleTypeDef htim12;
 
+TIM_HandleTypeDef TIM2_Handler;
 TIM_HandleTypeDef TIM3_Handler;      //定时器句柄
 
+//arr：自动重装值(TIM2,TIM2是32位的!!)
+//psc：时钟预分频数
+void TIM2_CH3_Cap_Init(uint32_t arr,uint16_t psc)
+{
+    TIM_IC_InitTypeDef TIM2_CH3Config;
+
+    TIM2_Handler.Instance=TIM2;                          //通用定时器5
+    TIM2_Handler.Init.Prescaler=psc;                     //分频系数
+    TIM2_Handler.Init.CounterMode=TIM_COUNTERMODE_UP;    //向上计数器
+    TIM2_Handler.Init.Period=arr;                        //自动装载值
+    TIM2_Handler.Init.ClockDivision=TIM_CLOCKDIVISION_DIV1;//时钟分频银子
+    HAL_TIM_IC_Init(&TIM2_Handler);//初始化输入捕获时基参数
+
+    TIM2_CH3Config.ICPolarity=TIM_ICPOLARITY_RISING;    //上升沿捕获
+    TIM2_CH3Config.ICSelection=TIM_ICSELECTION_DIRECTTI;//映射到TI1上
+    TIM2_CH3Config.ICPrescaler=TIM_ICPSC_DIV1;          //配置输入分频，不分频
+    TIM2_CH3Config.ICFilter=0;                          //配置输入滤波器，不滤波
+    HAL_TIM_IC_ConfigChannel(&TIM2_Handler,&TIM2_CH3Config,TIM_CHANNEL_3);//配置TIM2通道3
+
+    HAL_TIM_IC_Start_IT(&TIM2_Handler,TIM_CHANNEL_3);   //开启TIM2的捕获通道3，并且开启捕获中断
+    __HAL_TIM_ENABLE_IT(&TIM2_Handler,TIM_IT_UPDATE);   //使能更新中断
+}
+
+//此函数会被HAL_TIM_IC_Init()调用
+void HAL_TIM_IC_MspInit(TIM_HandleTypeDef *htim)
+{
+    GPIO_InitTypeDef GPIO_Initure;
+    __HAL_RCC_TIM2_CLK_ENABLE();            //使能TIM2时钟
+    __HAL_RCC_GPIOA_CLK_ENABLE();			//开启GPIOA时钟
+
+//    /**TIM2 GPIO Configuration
+//    PA2     ------> TIM2_CH3
+//    PA3     ------> TIM2_CH4
+    GPIO_Initure.Pin = GPIO_PIN_2|GPIO_PIN_3;
+    GPIO_Initure.Mode=GPIO_MODE_AF_PP;      //复用推挽输出
+    GPIO_Initure.Pull=GPIO_PULLDOWN;        //下拉
+    GPIO_Initure.Speed=GPIO_SPEED_HIGH;     //高速
+    GPIO_Initure.Alternate=GPIO_AF1_TIM2;   //PA0复用为TIM2通道1
+    HAL_GPIO_Init(GPIOA,&GPIO_Initure);
+
+    HAL_NVIC_SetPriority(TIM2_IRQn,5,0);    //设置中断优先级，抢占优先级2，子优先级0
+    HAL_NVIC_EnableIRQ(TIM2_IRQn);          //开启ITM5中断通道
+}
 
 //通用定时器3中断初始化
 //arr：自动重装值。
@@ -34,6 +78,13 @@ void TIM3_Init(uint16_t arr,uint16_t psc)
     HAL_TIM_Base_Start_IT(&TIM3_Handler); //使能定时器3和定时器3更新中断：TIM_IT_UPDATE
 }
 
+//[7]:0,没有成功的捕获;1,成功捕获到一次.
+//[6]:0,还没捕获到低电平;1,已经捕获到低电平了.
+//[5:0]:捕获低电平后溢出的次数(对于32位定时器来说,1us计数器加1,溢出时间:4294秒)
+uint8_t  TIM2CH3_CAPTURE_STA=0;	//输入捕获状态
+uint32_t	TIM2CH3_CAPTURE_VAL;	//输入捕获值(TIM2/TIM2是32位)
+
+
 
 //定时器底册驱动，开启时钟，设置中断优先级
 //此函数会被HAL_TIM_Base_Init()函数调用
@@ -47,6 +98,10 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef *htim)
     }
 }
 
+void TIM2_IRQHandler(void)
+{
+    HAL_TIM_IRQHandler(&TIM2_Handler);
+}
 
 //定时器3中断服务函数
 void TIM3_IRQHandler(void)
@@ -70,6 +125,32 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 }
 
 
+//定时器输入捕获中断处理回调函数，该函数在HAL_TIM_IRQHandler中会被调用
+void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)//捕获中断发生时执行
+{
+    if((TIM2CH3_CAPTURE_STA&0X80)==0)//还未成功捕获
+    {
+        if(TIM2CH3_CAPTURE_STA&0X40)		//捕获到一个下降沿
+        {
+            TIM2CH3_CAPTURE_STA|=0X80;		//标记成功捕获到一次高电平脉宽
+            TIM2CH3_CAPTURE_VAL=HAL_TIM_ReadCapturedValue(&TIM2_Handler,TIM_CHANNEL_3);//获取当前的捕获值.
+            TIM_RESET_CAPTUREPOLARITY(&TIM2_Handler,TIM_CHANNEL_3);   //一定要先清除原来的设置！！
+            TIM_SET_CAPTUREPOLARITY(&TIM2_Handler,TIM_CHANNEL_3,TIM_ICPOLARITY_RISING);//配置TIM2通道1上升沿捕获
+        } else  								//还未开始,第一次捕获上升沿
+        {
+            TIM2CH3_CAPTURE_STA=0;			//清空
+            TIM2CH3_CAPTURE_VAL=0;
+            TIM2CH3_CAPTURE_STA|=0X40;		//标记捕获到了上升沿
+            __HAL_TIM_DISABLE(&TIM2_Handler);        //关闭定时器5
+            __HAL_TIM_SET_COUNTER(&TIM2_Handler,0);
+            TIM_RESET_CAPTUREPOLARITY(&TIM2_Handler,TIM_CHANNEL_3);   //一定要先清除原来的设置！！
+            TIM_SET_CAPTUREPOLARITY(&TIM2_Handler,TIM_CHANNEL_3,TIM_ICPOLARITY_FALLING);//定时器5通道1设置为下降沿捕获
+            __HAL_TIM_ENABLE(&TIM2_Handler);//使能定时器5
+        }
+    }
+
+}
+
 //定时器底层驱动，时钟使能，引脚配置
 //此函数会被HAL_TIM_PWM_Init()调用
 //htim:定时器句柄
@@ -79,7 +160,6 @@ void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef *htim)
 
     if(htim->Instance==TIM12)
     {
-
         __HAL_RCC_TIM12_CLK_ENABLE();			//使能定时器12
         __HAL_RCC_GPIOH_CLK_ENABLE();			//开启GPIOH时钟
 
@@ -90,7 +170,6 @@ void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef *htim)
         GPIO_InitStruct.Alternate= GPIO_AF9_TIM12;	//PH6复用为TIM12_CH1
         HAL_GPIO_Init(GPIOH,&GPIO_InitStruct);
     }
-
 
     else if(htim->Instance==TIM4)
     {
@@ -110,6 +189,18 @@ void HAL_TIM_PWM_MspInit(TIM_HandleTypeDef *htim)
         GPIO_InitStruct.Alternate = GPIO_AF2_TIM4;
         HAL_GPIO_Init(GPIOD, &GPIO_InitStruct);
 
+    }
+
+    else	if(htim->Instance==TIM2)
+    {
+        /* USER CODE BEGIN TIM2_MspInit 0 */
+
+        /* USER CODE END TIM2_MspInit 0 */
+        /* Peripheral clock enable */
+        __HAL_RCC_TIM2_CLK_ENABLE();
+        /* USER CODE BEGIN TIM2_MspInit 1 */
+
+        /* USER CODE END TIM2_MspInit 1 */
     }
 
 }

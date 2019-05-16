@@ -7,7 +7,7 @@
 #define NotReady 0
 
 void moto_behaviour(void);
-void moto_param_init(void);
+void pid_param_init(void);
 void coordinate_trans(float X,float Y);
 
 typedef struct

@@ -1,6 +1,10 @@
 #ifndef LED_H
 #define LED_H
 #include "robocon.h"
+
+#define IndicateLED_On HAL_GPIO_WritePin(GPIOI,GPIO_PIN_2,GPIO_PIN_SET)
+#define IndicateLED_Off HAL_GPIO_WritePin(GPIOI,GPIO_PIN_2,GPIO_PIN_RESET)
+
 void led_configuration(void);
 
 extern void led_green_on(void);

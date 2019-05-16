@@ -1,33 +1,11 @@
+
 /**
-  ****************************(C) COPYRIGHT 2016 DJI****************************
-  * @file       detect_task.c/h
-  * @brief      设备离线判断任务，通过freeRTOS滴答时间作为系统时间，设备获取数据后
-  *             调用DetectHook记录对应设备的时间，在该任务会通过判断记录时间与系统
-  *             时间之差来判断掉线，同时将最高的优先级的任务通过LED的方式改变，包括
-  *             八个流水灯显示SBUB遥控器，三个云台上的电机，4个底盘电机，另外也通过
-  *             红灯闪烁次数来显示错误码。
-  * @history
-  *  Version    Date            Author          Modification
-  *  V1.0.0     Dec-26-2018     RM              1. 完成
-  *
-  @verbatim
-  ==============================================================================
+*移植DJI地盘检测程序程序 保留大部分功能 测试时间2019.4.17 ylt
+*保证设备稳定 检测错误
+*加入部分注释
+*/
 
-  ==============================================================================
-  @endverbatim
-  ****************************(C) COPYRIGHT 2016 DJI****************************
-  */
-
-#include "Detect_Task.h"
-
-#include "led.h"
-
-#include "CAN_Receive.h"
-#include "Remote_Control.h"
-
-#include "FreeRTOSConfig.h"
-#include "FreeRTOS.h"
-#include "task.h"
+#include "detect_task.h"
 
 //红灯闪，灭函数，切换闪灭
 #define DETECT_LED_R_TOGGLE() led_red_toggle()
@@ -51,7 +29,7 @@ uint32_t DetectTaskStack;
 #endif
 
 //掉线判断任务
-void DetectTask(void *pvParameters)
+void Detect_task(void *pvParameters)
 {
     static uint32_t systemTime;
     systemTime = xTaskGetTickCount();
@@ -60,7 +38,7 @@ void DetectTask(void *pvParameters)
     //空闲一段时间
     vTaskDelay(DETECT_TASK_INIT_TIME);
 
-    while (1)
+    for(;;)
     {
         static uint8_t error_num_display = 0;
         systemTime = xTaskGetTickCount();
@@ -132,6 +110,8 @@ void DetectTask(void *pvParameters)
 #if INCLUDE_uxTaskGetStackHighWaterMark
         DetectTaskStack = uxTaskGetStackHighWaterMark(NULL);
 #endif
+				
+				vTaskDelay(10);
     }
 }
 
@@ -254,17 +234,17 @@ static void DetectInit(uint32_t time)
 {
     //设置离线时间，上线稳定工作时间，优先级 offlineTime onlinetime priority
     uint16_t setItem[errorListLength][3] =
-        {
-            {30, 40, 15}, //SBUS
-            {2, 3, 14},   //yaw
-            {2, 3, 13},   //pitch
-            {10, 10, 12}, //trigger
-            {10, 10, 11}, //motor1
-            {10, 10, 10}, //motor2
-            {10, 10, 9},  //motor3
-            {10, 10, 8},  //motor4
+    {
+        {30, 40, 15}, //SBUS
+        {2, 3, 14},   //yaw
+        {2, 3, 13},   //pitch
+        {10, 10, 12}, //trigger
+        {10, 10, 11}, //motor1
+        {10, 10, 10}, //motor2
+        {10, 10, 9},  //motor3
+        {10, 10, 8},  //motor4
 
-        };
+    };
 
     for (uint8_t i = 0; i < errorListLength; i++)
     {
@@ -286,9 +266,9 @@ static void DetectInit(uint32_t time)
         errorList[i].worktime = time;
     }
 
-    errorList[DBUSTOE].dataIsErrorFun = RC_data_is_error;
-    errorList[DBUSTOE].solveLostFun = slove_RC_lost;
-    errorList[DBUSTOE].solveDataErrorFun = slove_data_error;
+//    errorList[DBUSTOE].dataIsErrorFun = RC_data_is_error;
+//    errorList[DBUSTOE].solveLostFun = slove_RC_lost;
+//    errorList[DBUSTOE].solveDataErrorFun = slove_data_error;
 
 #if GIMBAL_MOTOR_6020_CAN_LOSE_SLOVE
     errorList[YawGimbalMotorTOE].solveLostFun = GIMBAL_lose_slove;

@@ -18,6 +18,10 @@
 #include "cmsis_os.h"
 
 #include "main.h"
+
+#include "string.h"
+#include "stdlib.h"
+
 /* Õ‚…Ë ------------------------------------------------------------------*/
 #include "mytype.h"
 #include "usart.h"
@@ -30,17 +34,21 @@
 
 /* APP ------------------------------------------------------------------*/
 #include "posture_ctrl.h"
+#include "combinations.h"
 #include "moto_ctrl.h"
 #include "debug.h"
-
+#include "navigation.h"
+#include "Remote_Control.h"
 /* AHRS ------------------------------------------------------------------*/
 #include "imu.h"
-
+#include "mti30.h"
 /* HARDWARE ------------------------------------------------------------------*/
+
 #include "buzzer.h"
 #include "led.h"
 #include "servo.h"
 /* BSP ------------------------------------------------------------------*/
+#include "bsp_uart.h"
 #include "bsp_can.h"
 #include "pid.h"
 #include "vcan.h"

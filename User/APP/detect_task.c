@@ -110,6 +110,8 @@ void Detect_task(void *pvParameters)
 #if INCLUDE_uxTaskGetStackHighWaterMark
         DetectTaskStack = uxTaskGetStackHighWaterMark(NULL);
 #endif
+
+        vTaskDelay(10);
     }
 }
 

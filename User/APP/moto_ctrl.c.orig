@@ -5,9 +5,9 @@ void send_chassis_cur1_4(int16_t motor1, int16_t motor2, int16_t motor3, int16_t
 void send_chassis_cur5_8(int16_t motor5, int16_t motor6, int16_t motor7, int16_t motor8);
 
 bool IsMotoReadyOrNot= NotReady;
-float ref_agle[8];
+float ref_agle[8]= {0};
 float temp_angle;
-temp_data temp_pid;      //pid中间数据
+temp_data temp_pid= {0};     //pid中间数据
 
 /*******************************************************************************************
 	*@ 函数名称：void MotorControl_task(void *pvParameters)
@@ -16,11 +16,6 @@ temp_data temp_pid;      //pid中间数据
  *******************************************************************************************/
 void MotorControl_task(void *pvParameters)
 {
-
-    my_can_filter_init_recv_all(&hcan1);
-    HAL_CAN_Receive_IT(&hcan1, CAN_FIFO0);
-    HAL_CAN_Receive_IT(&hcan2, CAN_FIFO0);
-
     for(;;)
         moto_behaviour();
 }
@@ -32,9 +27,9 @@ void MotorControl_task(void *pvParameters)
 void moto_behaviour(void)
 {
 
-    if(IsMotoReadyOrNot== IsReady){
-        for(int i=0; i<8; i++) 
-            ref_agle[i]=temp_pid.ref_agle[i];        
+    if(IsMotoReadyOrNot== IsReady) {
+        for(int i=0; i<8; i++)
+            ref_agle[i]=temp_pid.ref_agle[i];
         IsMotoReadyOrNot= NotReady;
     }
 
@@ -43,6 +38,7 @@ void moto_behaviour(void)
         pid_calc(&pid_pos[i],moto_chassis[i].total_angle/100,ref_agle[i]/100);  //位置环 角度控制
         temp_pid.out[i] = pid_calc(&pid_spd[i],moto_chassis[i].speed_rpm,pid_pos[i].pos_out);  //速度环 速度控制
     }
+
     send_chassis_cur1_4(temp_pid.out[0],temp_pid.out[1],temp_pid.out[2],temp_pid.out[3]);		//传递1-4数据给can收发器
     send_chassis_cur5_8(temp_pid.out[4],temp_pid.out[5],temp_pid.out[6],temp_pid.out[7]);		//传递5-8数据给can收发器
 
@@ -51,22 +47,27 @@ void moto_behaviour(void)
 }
 
 /**
-* NAME: void moto_param_init(void)
+* NAME: void pid_param_init(void)
 * FUNCTION : pid参数填充初始化
 */
-void moto_param_init(void)
+void pid_param_init(void)
 {
 
-    for (int i = 0; i < 8; i++)//最大50 不然发散
-    {   //																										20,0.01,0
-        PID_struct_init(&pid_pos[i], POSITION_PID, 1000, 10, 25.0,0.01, 0);  //位置环PID参数设置（pid结构体，PID类型，最大输出，比例限制，P , I , D ）
-    }
+    for (int i = 0; i < 8; i++)//最大50 不然发散  						20,0.01,0
+        PID_struct_init(&pid_pos[i], POSITION_PID, 1000, 10, 28.5,0.01, 0);  //位置环PID参数设置（pid结构体，PID类型，最大输出，比例限制，P , I , D ）
 
-    for (int i = 0; i < 8; i++)
-    {   //																										15.5f,0,0
+    for (int i = 0; i < 8; i++)  //														15.5f,0,0
         PID_struct_init(&pid_spd[i], POSITION_PID, 10000, 0, 15.5f, 0, 0);		//速度环PID（pid结构体，PID类型，最大输出，比例限制，P , I , D ）
-    }
 
+    PID_struct_init(&pid_imu[0], POSITION_PID, 10000, 0, 1.5f, 0.01, 0);		//roll
+
+    PID_struct_init(&pid_imu[1], POSITION_PID, 10000, 0, 1.5f, 0.01, 0);		//pitch
+
+    PID_struct_init(&pid_imu[2], POSITION_PID, 10000, 0, 2.5f, 0, 0);		//yaw
+
+    PID_struct_init(&pid_climbing, POSITION_PID, 10000, 0, 3.5f, 0, 0);		//yaw
+	
+		PID_struct_init(&pid_test1, POSITION_PID, 10000, 0, 1.5f, 0, 0);		//yaw
 
 }
 

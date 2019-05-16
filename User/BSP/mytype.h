@@ -49,17 +49,17 @@ typedef volatile int16_t 	vs16;
 typedef volatile int32_t	vs32;
 
 
-typedef union{
-	s8 		s8_fmt[8];	//for angle and omega
-	u8 		u8_fmt[8];	//for angle and omega
-	char 	ch_fmt[8];	//
-	s16		s16_fmt[4];
-	u16		u16_fmt[4];
-	s32 	s32_fmt[2];
-	u32 	u32_fmt[2];
-	float 	f32_fmt[2];
-	double 	d64_fmt;
-}data_convert_ut;	//for diaobi gyro
+typedef union {
+    s8 		s8_fmt[8];	//for angle and omega
+    u8 		u8_fmt[8];	//for angle and omega
+    char 	ch_fmt[8];	//
+    s16		s16_fmt[4];
+    u16		u16_fmt[4];
+    s32 	s32_fmt[2];
+    u32 	u32_fmt[2];
+    float 	f32_fmt[2];
+    double 	d64_fmt;
+} data_convert_ut;	//for diaobi gyro
 
 
 
@@ -78,7 +78,7 @@ typedef float fp32;
 typedef double fp64;
 
 //格式化输出标识符
-//unit64_t     %llu   
+//unit64_t     %llu
 //unit32_t     %u
 //unit16_t   	 %hu
 //云台电机可能can发送失败的情况，尝试使用 随机延迟发送控制指令的方式解决

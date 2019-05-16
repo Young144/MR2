@@ -1,41 +1,55 @@
 
 #include "robocon.h"
 
-#define START_TASK_PRIO		1		//任务优先级
+#define START_TASK_PRIO		0		//任务优先级
 #define START_STK_SIZE 		128  		//任务堆栈大小	
 TaskHandle_t StartTask_Handler;		//任务句柄
 void start_task(void *pvParameters);		//任务函数
 
 #define MotorControl_TASK_PRIO		4		//任务优先级
-#define MotorControl_STK_SIZE 		1024  //任务堆栈大小
+#define MotorControl_STK_SIZE 		512  //任务堆栈大小
 TaskHandle_t MotorControlTask_Handler;		//任务句柄
 void MotorControl_task(void *pvParameters);	//任务函数
 
-#define Debug_TASK_PRIO		5		//任务优先级
-#define Debug_STK_SIZE 		512  //任务堆栈大小	
-TaskHandle_t DebugTask_Handler;		//任务句柄
-void Debug_task(void *pvParameters);		//任务函数
-
-#define PostureControl_TASK_PRIO		4		//任务优先级
+#define PostureControl_TASK_PRIO		5		//任务优先级
 #define PostureControl_STK_SIZE 		512 	 //任务堆栈大小	
 TaskHandle_t PostureControlTask_Handler;		//任务句柄
 void PostureControl_task(void *pvParameters);		//任务函数
 
-#define Detect_TASK_PRIO		4		//任务优先级
+#define Navi_TASK_PRIO		5		//任务优先级
+#define Navi_STK_SIZE 		512 	 //任务堆栈大小	
+TaskHandle_t NaviTask_Handler;		//任务句柄
+void Navi_task(void *pvParameters);		//任务函数
+
+#define Detect_TASK_PRIO		3		//任务优先级
 #define Detect_STK_SIZE 		128 	 //任务堆栈大小	
 TaskHandle_t DetectTask_Handler;		//任务句柄
 void Detect_task(void *pvParameters);		//任务函数
 
-#define TEST_TASK_PRIO		4		//任务优先级
-#define TEST_STK_SIZE 		512 	 //任务堆栈大小	
-TaskHandle_t TestTask_Handler;		//任务句柄
-void Test_task(void *pvParameters);		//任务函数
+#define Debug_TASK_PRIO		6		//任务优先级
+#define Debug_STK_SIZE 		512  //任务堆栈大小	
+TaskHandle_t DebugTask_Handler;		//任务句柄
+void Debug_task(void *pvParameters);		//任务函数
 
-#define VcanGC_TASK_PRIO		4		//任务优先级
+#define Rc_TASK_PRIO		6		//任务优先级
+#define Rc_STK_SIZE 		512  //任务堆栈大小	
+TaskHandle_t RcTask_Handler;		//任务句柄
+void Rc_task(void *pvParameters);		//任务函数
+
+#define VcanGC_TASK_PRIO		6		//任务优先级
 #define VcanGC_STK_SIZE 		512 	 //任务堆栈大小	
 TaskHandle_t VcanGCTask_Handler;		//任务句柄
 void VcanGC_task(void *pvParameters);		//任务函数
 
+#define Test_TASK_PRIO		6		//任务优先级
+#define Test_STK_SIZE 		512 	 //任务堆栈大小	
+TaskHandle_t TestTask_Handler;		//任务句柄
+void Test_task(void *pvParameters);		//任务函数
+
+#define LogicalFlow_TASK_PRIO		6		//任务优先级
+#define LogicalFlow_STK_SIZE 		256 	 //任务堆栈大小	
+TaskHandle_t LogicalFlowTask_Handler;		//任务句柄
+void LogicalFlow_task(void *pvParameters);		//任务函数
 
 void SystemClock_Config(void);
 static void MX_NVIC_Init(void);
@@ -47,23 +61,43 @@ int main(void)
     MX_GPIO_Init();				//GPIO初始化
     MX_DMA_Init();				//DMA初始化
     MX_CAN1_Init();				//CAN1接口初始化
+
     MX_CAN2_Init();				//CAN1接口初始化
     MX_SPI5_Init();				//spi5初始化
-    MX_USART2_UART_Init();//usart2串口初始化
-		MX_UART7_Init();			//uart7发送波形给上位机
+
+    MX_USART2_UART_Init();
+    uart_receive_init(&USART2_HUART);//USART2DMA空闲中断
+    MX_USART3_UART_Init();
+    uart_receive_init(&USART3_HUART);//USART3DMA空闲中断
+    MX_USART6_UART_Init();
+    uart_receive_init(&IMU_HUART);//usart6DMA接收mti30数据
+    MX_UART7_Init();			//uart7DMA接收
+    uart_receive_init(&OPENMV_HUART);//USART7DMA空闲中断
+    MX_UART8_Init();		//usart8DMA发送数据给山外上位机
+
     MX_NVIC_Init();				//中断优先级初始化
     //定时器时钟90M分频系数9000-1,定时器3的频率90M/9000=10K自动重装载10-1,定时器周期1ms
-    TIM3_Init(10-1,9000-1);
+    TIM3_Init(10-1,9000-1);//定时器3初始化 步态震荡时钟
 
-    moto_param_init();		//电机PID参数初始化
+    my_can_filter_init_recv_all(&hcan1);//开启CAN滤波器
+    HAL_CAN_Receive_IT(&hcan1, CAN_FIFO0);//开启CAN1
+    HAL_CAN_Receive_IT(&hcan2, CAN_FIFO0);//开启CAN2
+
+    pid_param_init();		//所有使用到的PID参数初始化
     buzzer_init(500-1, 90-1);//蜂鸣器初始化
     led_configuration();	//流水灯 红绿灯初始化
-    //f=Tck/(psc+1)*(arr+1) 定时器时钟为90M  50Hz=180MHz/(3000*1200)   330HZ=180MHZ/(3000*182)
-    Servo_Init(20000-1,90-1);
+    //f=Tck/(psc+1)*(arr+1) 定时器时钟为90M  50Hz=180MHz/(90*20000)
+    Servo_Init(20000-1,90-1);//舵机PWM通道初始化
 
-    Servo1_TEST_POSITION;
-    Servo2_TEST_POSITION;
-    printf("system init\r\n");
+		//TIM2_CH3_Cap_Init(0XFFFFFFFF,90-1); //PWM捕获 以1MHZ的频率计数 
+
+    Servo1_DOWN;//舵机1复位
+    Servo2_DOWN_POS;//舵机2复位
+    Servo3_CLOSE;
+
+//    HAL_GPIO_WritePin(GPIOH,GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5,GPIO_PIN_SET);  //开启四个24V输出
+
+    printf("\r\n/*************SYSTEM INIT SUCCESS****************/ \r\n");
 
     //创建开始任务
     xTaskCreate((TaskFunction_t )start_task,            //任务函数
@@ -79,6 +113,7 @@ int main(void)
 //开始任务任务函数
 void start_task(void *pvParameters)
 {
+    BeginWarnBuzzer();
 
     taskENTER_CRITICAL();           //进入临界区
     //创建MotorControl_task
@@ -88,13 +123,6 @@ void start_task(void *pvParameters)
                 (void*          )NULL,
                 (UBaseType_t    )MotorControl_TASK_PRIO,
                 (TaskHandle_t*  )&MotorControlTask_Handler);
-    //创建Debug_task
-    xTaskCreate((TaskFunction_t )Debug_task,
-                (const char*    )"Debug_task",
-                (uint16_t       )Debug_STK_SIZE,
-                (void*          )NULL,
-                (UBaseType_t    )Debug_TASK_PRIO,
-                (TaskHandle_t*  )&DebugTask_Handler);
     //创建PostureControl_task
     xTaskCreate((TaskFunction_t )PostureControl_task,
                 (const char*    )"PostureControl_task",
@@ -102,68 +130,438 @@ void start_task(void *pvParameters)
                 (void*          )NULL,
                 (UBaseType_t    )PostureControl_TASK_PRIO,
                 (TaskHandle_t*  )&PostureControlTask_Handler);
-    //创建Detect任务
-    xTaskCreate((TaskFunction_t )Detect_task,
-                (const char*    )"Detect_task",
-                (uint16_t       )Detect_STK_SIZE,
+    //创建NAVIGATION任务
+    xTaskCreate((TaskFunction_t )Navi_task,
+                (const char*    )"Navi_task",
+                (uint16_t       )Navi_STK_SIZE,
                 (void*          )NULL,
-                (UBaseType_t    )Detect_TASK_PRIO,
-                (TaskHandle_t*  )&DetectTask_Handler);
+                (UBaseType_t    )Navi_TASK_PRIO,
+                (TaskHandle_t*  )&NaviTask_Handler);
+    //创建Detect任务
+//    xTaskCreate((TaskFunction_t )Detect_task,
+//                (const char*    )"Detect_task",
+//                (uint16_t       )Detect_STK_SIZE,
+//                (void*          )NULL,
+//                (UBaseType_t    )Detect_TASK_PRIO,
+//                (TaskHandle_t*  )&DetectTask_Handler);
+    //创建Debug_task
+    xTaskCreate((TaskFunction_t )Debug_task,
+                (const char*    )"Debug_task",
+                (uint16_t       )Debug_STK_SIZE,
+                (void*          )NULL,
+                (UBaseType_t    )Debug_TASK_PRIO,
+                (TaskHandle_t*  )&DebugTask_Handler);
+    //创建Rc_task
+    xTaskCreate((TaskFunction_t )Rc_task,
+                (const char*    )"Rc_task",
+                (uint16_t       )Rc_STK_SIZE,
+                (void*          )NULL,
+                (UBaseType_t    )Rc_TASK_PRIO,
+                (TaskHandle_t*  )&RcTask_Handler);
+    //创建VcanGC任务 VCAN ground control 山外上位机
+//    xTaskCreate((TaskFunction_t )VcanGC_task,
+//                (const char*    )"VcanGC_task",
+//                (uint16_t       )VcanGC_STK_SIZE,
+//                (void*          )NULL,
+//                (UBaseType_t    )VcanGC_TASK_PRIO,
+//                (TaskHandle_t*  )&VcanGCTask_Handler);
     //创建Test任务
     xTaskCreate((TaskFunction_t )Test_task,
                 (const char*    )"Test_task",
-                (uint16_t       )TEST_STK_SIZE,
+                (uint16_t       )Test_STK_SIZE,
                 (void*          )NULL,
-                (UBaseType_t    )TEST_TASK_PRIO,
+                (UBaseType_t    )Test_TASK_PRIO,
                 (TaskHandle_t*  )&TestTask_Handler);
-		//创建VcanGC任务
-    xTaskCreate((TaskFunction_t )VcanGC_task,
-                (const char*    )"VcanGC_task",
-                (uint16_t       )VcanGC_STK_SIZE,
-                (void*          )NULL,
-                (UBaseType_t    )VcanGC_TASK_PRIO,
-                (TaskHandle_t*  )&VcanGCTask_Handler);
+    //创建LogicalFlow任务 逻辑流控制
+    xTaskCreate((TaskFunction_t )LogicalFlow_task,
+                (const char*    )"LogicalFlow_task",
+                (uint16_t       )LogicalFlow_STK_SIZE,
+                (void*           )NULL,
+                (UBaseType_t    )LogicalFlow_TASK_PRIO,
+                (TaskHandle_t*  )&LogicalFlowTask_Handler);
 
     vTaskDelete(StartTask_Handler); //删除开始任务
     taskEXIT_CRITICAL();            //退出临界区
 
 }
-uint32_t Timetick1ms = 0;
 
+
+/*********传感器端口说说明********************
+*
+*舵机说明：1号（升杆舵机）H:PD12		2号（令牌舵机）G:PD13		3号（解锁舵机）F:PD14
+*
+*限位开关 令牌检测A:PI0		启动B:PH12		重启1 U:PA2		重启2 V:PA3		(重启3 W:PI5)	占时没有用到
+*
+*光电开关（挥手开始上坡）光电1 S:PA0 光电2 T:PA1
+*
+*指示LED Z PI2
+**/
+//#define keyToken HAL_GPIO_ReadPin(GPIOI,GPIO_PIN_0)
+//#define keyStart HAL_GPIO_ReadPin(GPIOH,GPIO_PIN_12)
+
+//#define keyRestart1 HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_2)
+//#define keyRestart2 HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_3)
+//#define keyRestart3 HAL_GPIO_ReadPin(GPIOI,GPIO_PIN_5)
+
+//#define keyInf1 HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_0)
+//#define keyInf2 HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_1)
+
+//#define RED_GROUNG 0
+//#define BLUE_GROUNG 1
+
+bool GROUND_SELECT=RED_GROUNG;  //红蓝场选择
+
+/**
+*		控制整个比赛的逻辑过程 逻辑流控制
+*/
+void LogicalFlow_task(void *pvParameters)
+{
+    for(;;) {
+
+        IndicateLED_Off;
+
+        while(1)
+        {
+            vTaskDelay(500);
+            if(keyStart==0)//等待限位开关按下去 启动B:PH12
+            {
+                state = START;
+                break;
+            }
+            else if(keyRestart1==0) //重启1 U:PA2
+                goto restart1;
+
+            else if(keyRestart2==0) //重启2 V:PA3
+                goto restart2;
+        }
+
+restart1:
+
+        while(keyToken!=0) //等待限位开关按下去 令牌落下 A  PI0
+            vTaskDelay(500);
+
+        IndicateLED_On;
+				
+				vTaskDelay(800);  				//等待 mr1走
+
+        state = STOP;
+        vTaskDelay(500);
+
+        IndicateLED_Off;
+
+				//Climbing_Test();  //上坡测试程序
+
+        //ACTION初始方向角为0 左偏为正 右偏为负
+				
+        yaw_set=0;  //------航向角设定为0
+        LinearCorrection=normal_correction;		//打开直线矫正
+        now_time=times;
+        state = TROT;		//小跑步态
+
+        OpenMvInspect(openmv_Yellow);  // -------- 等待检测到转弯 黄色 --沙丘
+
+        IndicateLED_On;
+
+        state= STOP ;
+        vTaskDelay(200);
+
+        if(GROUND_SELECT==RED_GROUNG) {//红蓝场判断 红场
+            _rotate_angle=10;
+            yaw_set=10;		//----------------------航向角设定 10 补偿0
+            //now_time=times;
+            state = TEST7;  //--------小碎步转弯 左
+            while(imuinfo.ActVal[0]<=_rotate_angle)		//转到45度之后自动停止 10
+                osDelay(50);
+        }
+        else if(GROUND_SELECT==BLUE_GROUNG) {
+            _rotate_angle=-10;
+            yaw_set=-10;		//----------------------航向角设定 -10 补偿0
+            now_time=times;
+            state = TEST8;  //--------小碎步转弯 右
+            while(imuinfo.ActVal[0]>=_rotate_angle)		//转到45度之后自动停止 10
+                osDelay(50);
+        }
+
+        IndicateLED_Off;
+
+        state=TEST6;				// --垮沙丘前  小碎步走一走
+
+        OpenMvInspect(openmv_Yellow);
+
+        vTaskDelay(1300);
+        state=REALSE;
+        vTaskDelay(500);
+
+        //---------------------越沙丘---------------------//
+        StepOver();
+
+        // now_time=times;
+        state=TROT;		    //-------------------小跑跑下沙丘
+        vTaskDelay(800);
+
+        state=REALSE;
+        vTaskDelay(250);
+        state=STOP;
+        vTaskDelay(500);
+
+        if(GROUND_SELECT==RED_GROUNG) {  //红蓝场判断 红场
+            _rotate_angle=14;		//---------------------转向
+            yaw_set=14;  //----------------航向角设定 14 补偿0
+            state = ROTAT_LEFT;
+            while(imuinfo.ActVal[0]<=_rotate_angle)
+                osDelay(50);
+        }
+        else if(GROUND_SELECT==BLUE_GROUNG) {
+            _rotate_angle=-14;		//---------------------转向
+            yaw_set=-14;  //----------------航向角设定 14 补偿0
+            state = ROTAT_RIGHT;
+            while(imuinfo.ActVal[0]>=_rotate_angle)
+                osDelay(50);
+        }
+
+        state= STOP;
+        vTaskDelay(500);
+
+restart2:
+        //now_time=times;
+        state= TROT;		//继续走直到转弯检测
+
+        OpenMvInspect(openmv_Yellow); //等待检测到黄色 色块----------越绳子检测
+
+        IndicateLED_On;
+
+        state=REALSE;
+
+        if(GROUND_SELECT==RED_GROUNG) {  //红蓝场判断 红场
+            _rotate_angle=0-1;		//-------------转向-----------正对绳子-------
+            yaw_set=0-1;
+            state = ROTAT_RIGHT;
+            while(imuinfo.ActVal[0]>=_rotate_angle)
+                osDelay(20);
+        }
+        else if(GROUND_SELECT==BLUE_GROUNG) {
+            _rotate_angle=0+1;		//-------------转向-----------正对绳子-------
+            yaw_set=0+1;
+            state = ROTAT_LEFT;
+            while(imuinfo.ActVal[0]<=_rotate_angle)
+                osDelay(20);
+        }
+
+        state=REALSE;
+
+        IndicateLED_Off;
+
+        state=TEST6;				//小碎步
+        vTaskDelay(3500);
+
+        state=REALSE;
+
+        //---------------------跨绳子---------------------//
+				LinearCorrection=test1_correction;		//打开跨绳子时候的步态纠偏
+        CrossTheLine();
+
+        yaw_set=0-0; //航向角设定 0 补偿-0
+        now_time=times;
+        state=TEST1;
+        vTaskDelay(1500);
+
+        state= STOP;
+
+        //...上坡------------
+        while(keyInf1!=0||keyInf2!=0) //第一段完成-------等待光电开关--进入爬坡程序-----
+            vTaskDelay(500);
+
+        LinearCorrection=Deny;
+        LinearCorrection=climbing_correction;
+
+        yaw_set=imuinfo.ActVal[0];//设定当前角度为前进方向
+        now_time=times;
+        climbing_offset_flag=YES;
+        _climbing_offset_angle=15;
+        state= CLIMBING;
+
+        vTaskDelay(5000);  //延时3000
+
+        OpenMvInspect(openmv_Red);  //等待检测到红色 色块 摄像头已经检测到了爬到了坡顶
+
+        IndicateLED_On;
+
+        vTaskDelay(3500);  //延时3000
+
+        IndicateLED_Off;
+
+        state= STOP;
+
+        Servo3_OPEN;  //锁位舵机打开
+
+        Servo1_PEAK; //舵机一高位
+        vTaskDelay(200);
+
+        Servo2_PEAK_POS;//舵机二高位
+
+        while(1)		//停
+            vTaskDelay(500);
+
+
+    }
+}
 
 void Test_task(void *pvParameters)
 {
 
-    int count=0;
-
+    float kalam;
     for(;;) {
 
-//	mpu_get_data();
-//	imu_ahrs_update();
-//	imu_attitude_update();
-//	HAL_Delay(5);
-//	printf(" Roll:  \n");
-//	//HAL_UART_Transmit(&huart6, (uint8_t *)buf, (COUNTOF(buf)-1), 55);
-//	HAL_Delay(5);
-//
-//	Servo_DOWN;
+        if(keyRestart3==0) {
+            vTaskDelay(200);
+            if(keyRestart3==0) {
+                IndicateLED_On;
+                state= STOP;
+                vTaskDelay(800);
+                vTaskDelete(LogicalFlowTask_Handler);
+                vTaskDelay(200);
 
-//		wave_form_data[0] =count;
+                taskENTER_CRITICAL();           //进入临界区
+                xTaskCreate((TaskFunction_t )LogicalFlow_task,
+                            (const char*    )"LogicalFlow_task",
+                            (uint16_t       )LogicalFlow_STK_SIZE,
+                            (void*           )NULL,
+                            (UBaseType_t    )LogicalFlow_TASK_PRIO,
+                            (TaskHandle_t*  )&LogicalFlowTask_Handler);
+                taskEXIT_CRITICAL();            //退出临界区
+
+                IndicateLED_Off;
+														
+            }
+        }
+
+        vTaskDelay(500);
+//StartPosToMiddlePos();
+
+//printf("Pitch %f Roll %f Yaw %f stage %d count %d\r\n",imuinfo.ActVal[1],imuinfo.ActVal[2],imuinfo.ActVal[0],stage,_count_navi);
+// printf("_Pitch_rev %f  pitch_offset %f qian%d hou %d\r\n",_Pitch_rev,pitch_offset,HAL_GPIO_ReadPin(GPIOI,GPIO_PIN_2),HAL_GPIO_ReadPin(GPIOI,GPIO_PIN_7));
+
+//printf("Roll %f Pitch %f Yaw %f dev_len %f yaw_calibrated %f\r\n",imuinfo.ActVal[2],imuinfo.ActVal[1],imuinfo.ActVal[0],step_len_dev,yaw_calibrated );
+
+//printf("Roll %f Pitch %f Yaw %f\r\n",imuinfo.ActVal[2],imuinfo.ActVal[1],imuinfo.ActVal[0]);
+
+//printf("Yaw %f dev_high %f\r\n",imuinfo.ActVal[0],step_high_dev );
+
+//
+        printf("Yaw %f step_len_dev %f 偏心度%f  白线角%f  色块%f \r\n",imuinfo.ActVal[0],step_len_dev,openmvinfo.ActVal[0],openmvinfo.ActVal[1],openmvinfo.ActVal[2]);
+
+//				printf(" CCR1 %d  CCR2 %d  CCR3 %d\r\n",(int)TIM4->CCR1,(int)TIM4->CCR2,(int)TIM4->CCR3);
+//				printf(" tockenA %d startB %d restart1U %d restart2V %d restart3W %d inf1S %d inf2T %d\r\n",HAL_GPIO_ReadPin(GPIOI,GPIO_PIN_0),HAL_GPIO_ReadPin(GPIOH,GPIO_PIN_12),HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_2),HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_3),HAL_GPIO_ReadPin(GPIOI,GPIO_PIN_5),HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_0),HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_1));
+
+//        printf("步高 %2.1f  ",state_detached_params[state].detached_params_0.stance_height);
+//        printf("步长 %2.1f  ",state_detached_params[state].detached_params_0.step_length);
+//        printf("抬腿高 %2.1f  ",state_detached_params[state].detached_params_0.up_amp);
+//        printf("压腿高 %2.1f  ",state_detached_params[state].detached_params_0.down_amp);
+//        printf("飞行占比 %2.2f  ",state_detached_params[state].detached_params_0.flight_percent);
+//        printf("频率 %2.1f  ",state_detached_params[state].detached_params_0.freq);
+
+//        printf("\r\n");
+
+
+
+//printf("1 %d 2 %d 3 %d \r\n",USART6RxBuf[0],USART6RxBuf[1],USART6RxBuf[2]);
+//kalam=KalmanFilter(imuinfo.ActVal[0],KALMAN_Q,KALMAN_R);
+//printf("KEY_VALUE %d Yaw %f  Yaw_Calibrated %f step_len_dev %f",ps2info.KEY_VALUE, imuinfo.ActVal[0],Yaw_Calibrated,step_len_dev);
+//printf("KEY_VALUE=%d Yaw %f",ps2info.KEY_VALUE, imuinfo.ActVal[0]);
+
+
+//		  printf("yaw_set=%f ",yaw_set);
+//      printf("\r\n");
+//			for(int i=0;i<8;i++)
+//			printf("%x ", usart3_buf[i]);
+//			printf("\r\n");
+
+//			for(int i=0;i<28;i++)
+//			printf("%x ",imu_buf[i]);
+//			printf("\r\n");
+
+
+//			for(int i=0;i<16;i++)
+//			printf("%x ",openmv_buf[i]);
+//			printf("\r\n");		//角度  //中心坐标 // 1白 2黄 4红
+
+
+
+
+
+//      printf(" %f  %f  %f\r\n",KalmanFilter(imuinfo.ActVal[2],KALMAN_Q,KALMAN_R),KalmanFilter(imuinfo.ActVal[1],KALMAN_Q,KALMAN_R),KalmanFilter(imuinfo.ActVal[0],KALMAN_Q,KALMAN_R));
+//      printf("Roll %f Pitch %f Yaw %f \r\n",imuinfo.ActVal[2],imuinfo.ActVal[1],imuinfo.ActVal[0]);
+//      printf(" %x %x %x  %x %x %x %x %x %x\n",dbus_buf[0],dbus_buf[1],dbus_buf[2],dbus_buf[3],dbus_buf[4],dbus_buf[5],dbus_buf[6],dbus_buf[7],dbus_buf[8]);
+
+//		mpu_get_data();
+//		imu_ahrs_update();
+//		imu_attitude_update();
+//		HAL_Delay(5);
+//		printf(" Roll:  \n");
+//		HAL_UART_Transmit(&huart6, (uint8_t *)buf, (COUNTOF(buf)-1), 55);
+//		HAL_Delay(5);
+
+//		Servo_DOWN;
 //		wave_form_data[1] =count;
 //		wave_form_data[2] =count;
+//    temp_pid.ref_agle[0]-=30.0f*ReductionAndAngleRatio;
+//    temp_pid.ref_agle[1]+=30.0f*ReductionAndAngleRatio;
+
+//		temp_pid.ref_agle[0]=count*TransData;
 //		count+=10;
-//    vTaskDelay(500);
-//
-//
+//		if(count>=50)
+//		{count=0;}
+
+//		printf(" ref_agle[0]  = %f   ref_agle[1]  =%f  \n",temp_pid.ref_agle[0],temp_pid.ref_agle[1]);
+//		printf(" theat1  = %f   theat2  =%f  \n",theta1,theta2);
+
 //		Servo_PEAK;
 
     }
-
-//        printf("\r\ngiven_current%d given_current2=%d 温度1=%d 角度=%d\r\n ",moto_chassis[2].given_current,moto_chassis[3].given_current,moto_chassis[2].hall,moto_chassis[3].total_angle);
-//        printf("\r\n t=%llu",time);
-//        printf("\r\n x=%f y=%f",x,y);
-    //  vTaskDelay(500);
 }
+
+/////--------转向------1-----///
+//        _rotate_angle=20;		//转向
+//        yaw_set=20;
+//        state = ROTAT_LEFT;
+//        while(imuinfo.ActVal[0]<=_rotate_angle)
+//            osDelay(50);
+//
+//        state= STOP;
+//        vTaskDelay(500);
+
+//        state= TROT;		//继续走直到转弯检测
+
+//        while(1)  //等待白线角度>=80
+//        {
+//            vTaskDelay(300);
+//            if(openmvinfo.ActVal[1]>=80)
+//            {
+//                vTaskDelay(300);
+//                if(openmvinfo.ActVal[1]>=80)
+//                {
+//                    vTaskDelay(300);
+//                    if(openmvinfo.ActVal[1]>=80)
+//                        break;
+//                }
+//            }
+//        }
+
+//				vTaskDelay(2000);
+//        state=STOP;
+//        state=REALSE;
+
+
+//        _rotate_angle=0;		//转向
+//        yaw_set=0;
+//        state = ROTAT_RIGHT;
+
+//        while(imuinfo.ActVal[0]>=_rotate_angle)
+//            osDelay(50);
+//        state= STOP;
+
+//        vTaskDelay(300);
+//        state= TROT;
 
 
 
@@ -215,15 +613,35 @@ void SystemClock_Config(void)
 }
 static void MX_NVIC_Init(void)
 {
+    /* USART1_IRQn interrupt configuration */
+    HAL_NVIC_SetPriority(USART1_IRQn, 5, 0);
+    HAL_NVIC_EnableIRQ(USART1_IRQn);
+
     /* USART2_IRQn interrupt configuration */
     HAL_NVIC_SetPriority(USART2_IRQn, 5, 0);
     HAL_NVIC_EnableIRQ(USART2_IRQn);
-    /* DMA1_Stream5_IRQn interrupt configuration */
-    HAL_NVIC_SetPriority(DMA1_Stream5_IRQn, 5, 0);
-    HAL_NVIC_EnableIRQ(DMA1_Stream5_IRQn);
-    /* DMA1_Stream6_IRQn interrupt configuration */
-    HAL_NVIC_SetPriority(DMA1_Stream6_IRQn, 5, 0);
-    HAL_NVIC_EnableIRQ(DMA1_Stream6_IRQn);
+
+    /* USART3_IRQn interrupt configuration */
+    HAL_NVIC_SetPriority(USART3_IRQn, 5, 0);
+    HAL_NVIC_EnableIRQ(USART3_IRQn);
+
+    /* USART6_IRQn interrupt configuration */
+    HAL_NVIC_SetPriority(USART6_IRQn, 5, 0);
+    HAL_NVIC_EnableIRQ(USART6_IRQn);
+
+    /* USART7_IRQn interrupt configuration */
+    HAL_NVIC_SetPriority(UART7_IRQn, 5, 0);
+    HAL_NVIC_EnableIRQ(UART7_IRQn);
+
+    /* DMA1_Stream1_IRQn interrupt configuration */
+    HAL_NVIC_SetPriority(DMA1_Stream1_IRQn, 5, 0);
+    HAL_NVIC_EnableIRQ(DMA1_Stream1_IRQn);
+
+    /* DMA2_Stream1_IRQn interrupt configuration */
+    HAL_NVIC_SetPriority(DMA2_Stream1_IRQn, 5, 0);
+    HAL_NVIC_EnableIRQ(DMA2_Stream1_IRQn);
+
+
 }
 
 void Error_Handler(void)

@@ -4,6 +4,48 @@
 TIM_HandleTypeDef TIM12_Handler;
 TIM_OC_InitTypeDef TIM12_CH1Handler;
 
+
+void ProcessBuzzer(void)
+{
+
+    int sound[]=
+    {
+        M7,750,Z0,
+
+    };
+
+    int length = sizeof(sound)/sizeof(sound[0]);//计算数组长度
+    for(int i=0; i<(length/2); i++)//取数组数据
+    {
+        buzzer_on(sound[2*i], 200);
+        vTaskDelay(4*sound[2*i+1]);//音长的时间都乘以5即一拍为500微秒，此值"5"可调整，只是播放的整个快慢而已，有点类似于视频快进和后退
+    }
+    buzzer_off();
+
+}
+
+
+
+void ActionDoneBuzzer(void)
+{
+
+    int sound[]=
+    {
+        M7,50,Z0,10,M7,50,Z0,10,M7,100,Z0,10,
+
+    };
+
+    int length = sizeof(sound)/sizeof(sound[0]);//计算数组长度
+    for(int i=0; i<(length/2); i++)//取数组数据
+    {
+        buzzer_on(sound[2*i], 200);
+        vTaskDelay(4*sound[2*i+1]);//音长的时间都乘以5即一拍为500微秒，此值"5"可调整，只是播放的整个快慢而已，有点类似于视频快进和后退
+    }
+    buzzer_off();
+
+}
+
+
 /**
 * NAME: void BeginWarnBuzzer(void)
 * FUNCTION : 开机提醒音 do mi xi
@@ -109,6 +151,9 @@ void buzzer_init(uint16_t arr, uint16_t psc)
     HAL_TIM_PWM_ConfigChannel(&TIM12_Handler,&TIM12_CH1Handler,TIM_CHANNEL_1);//配置TIM12通道1
 
     HAL_TIM_PWM_Start(&TIM12_Handler,TIM_CHANNEL_1);//开启PWM通道1
+
+    buzzer_off();
+
 }
 
 void buzzer_on(uint16_t psc, uint16_t pwm)

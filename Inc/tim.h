@@ -55,6 +55,15 @@ extern TIM_HandleTypeDef htim12;
 /* USER CODE BEGIN Private defines */
 extern TIM_HandleTypeDef TIM3_Handler;      //定时器句柄 
 
+extern uint8_t  TIM2CH3_CAPTURE_STA;	//输入捕获状态		    				
+extern uint32_t	TIM2CH3_CAPTURE_VAL;	//输入捕获值(TIM2/TIM2是32位)
+
+void TIM2_CH3_Cap_Init(uint32_t arr,uint16_t psc);
+
+/* USER CODE BEGIN Prototypes */
+extern TIM_HandleTypeDef TIM2_Handler;      //定时器5句柄
+
+
 /* USER CODE END Private defines */
 
 extern void Error_Handler(void);

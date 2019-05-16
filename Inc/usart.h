@@ -29,7 +29,7 @@ extern uint16_t USART2_RX_STA;       //接收状态标记
 
 #define EN_USART6_RX 			1		//使能（1）/禁止（0）串口1接收
 #define USART6TXBUFSIZE   8 //缓存大小
-#define USART6RXBUFSIZE   20 //缓存大小
+#define USART6RXBUFSIZE   40 //缓存大小
 extern uint8_t USART6TxBuf[USART6TXBUFSIZE];
 extern uint8_t USART6RxBuf[USART6RXBUFSIZE];
 extern uint16_t USART6_RX_STA;       //接收状态标记
@@ -41,6 +41,7 @@ extern UART_HandleTypeDef huart2;
 extern UART_HandleTypeDef huart3;
 extern UART_HandleTypeDef huart6;
 extern UART_HandleTypeDef huart7;
+extern UART_HandleTypeDef huart8;
 /* USER CODE BEGIN Private defines */
 
 /* USER CODE END Private defines */
@@ -51,8 +52,8 @@ void MX_USART1_UART_Init(void);
 void MX_USART2_UART_Init(void);
 void MX_USART3_UART_Init(void);
 void MX_USART6_UART_Init(void);
-void MX_USART7_UART_Init(void);
 void MX_UART7_Init(void);
+void MX_UART8_Init(void);
 /* USER CODE BEGIN Prototypes */
 
 /* USER CODE END Prototypes */

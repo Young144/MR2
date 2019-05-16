@@ -9,6 +9,8 @@ void promising_young(void);
 void BeginWarnBuzzer(void);
 void IMUWarnBuzzer(void);
 void happy_time(void);
+void ActionDoneBuzzer(void);
+void ProcessBuzzer(void);
 
 extern TIM_HandleTypeDef TIM12_Handler;
 extern TIM_OC_InitTypeDef TIM12_CH1Handler;

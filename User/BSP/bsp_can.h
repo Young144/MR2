@@ -83,8 +83,8 @@ typedef struct {
     int16_t	 	speed_rpm;  //转速  等于	real_current
     int16_t  	real_current;//转子转速
     int16_t  	given_current;//实际转矩电流
-		uint8_t  	hall;		//电机温度
-    uint16_t 	angle;				//abs angle range:[0,8191]   
+    uint8_t  	hall;		//电机温度
+    uint16_t 	angle;				//abs angle range:[0,8191]
     uint16_t 	last_angle;	//最新的角度
     uint16_t	offset_angle;//补偿角度
     int32_t		round_cnt;		//转圈计数
