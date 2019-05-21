@@ -9,6 +9,7 @@ float ref_agle[8]= {0};
 float temp_angle;
 temp_data temp_pid= {0};     //pid中间数据
 
+float test_speed=0;
 /*******************************************************************************************
 	*@ 函数名称：void MotorControl_task(void *pvParameters)
 	*@ 功能： 接受电机反馈数据并且进行PID计算 输出电流大小控制电机位置
@@ -35,8 +36,11 @@ void moto_behaviour(void)
 
     for(int i=0; i<8; i++)
     {
+			//  pid_calc(&pid_pos[i],moto_chassis[i].total_angle/100,ref_agle[i]/100);  //位置环 角度控制
         pid_calc(&pid_pos[i],moto_chassis[i].total_angle/100,ref_agle[i]/100);  //位置环 角度控制
-        temp_pid.out[i] = pid_calc(&pid_spd[i],moto_chassis[i].speed_rpm,pid_pos[i].pos_out);  //速度环 速度控制
+      //  temp_pid.out[i] = pid_calc(&pid_spd[i],moto_chassis[i].speed_rpm,pid_pos[i].pos_out);  //速度环 速度控制
+//			  temp_pid.out[i] = pid_calc(&pid_spd[i],moto_chassis[i].speed_rpm,test_speed);  //速度环 速度控制
+			  temp_pid.out[i] = pid_calc(&pid_spd[i],moto_chassis[i].speed_rpm,pid_pos[i].pos_out);  //速度环 速度控制
     }
 
     send_chassis_cur1_4(temp_pid.out[0],temp_pid.out[1],temp_pid.out[2],temp_pid.out[3]);		//传递1-4数据给can收发器
@@ -53,12 +57,19 @@ void moto_behaviour(void)
 void pid_param_init(void)
 {
 
-    for (int i = 0; i < 8; i++)//最大50 不然发散  						20,0.01,0
-        PID_struct_init(&pid_pos[i], POSITION_PID, 1000, 10, 28.5,0.01, 0);  //位置环PID参数设置（pid结构体，PID类型，最大输出，比例限制，P , I , D ）
+    for (int i = 0; i < 8; i++)//最大50 不然发散  						20,0.01,0  37,0.008
+        PID_struct_init(&pid_pos[i], POSITION_PID, 100000, 20000, 47,0.008, 0);  //位置环PID参数设置（pid结构体，PID类型，最大输出，比例限制，P , I , D ）
 
-    for (int i = 0; i < 8; i++)  //														15.5f,0,0
-        PID_struct_init(&pid_spd[i], POSITION_PID, 10000, 0, 15.5f, 0, 0);		//速度环PID（pid结构体，PID类型，最大输出，比例限制，P , I , D ）
+	
+	
+	
+    for (int i = 0; i < 8; i++)  //									16384.0f对应20A					15.5f,0,0 // 16.0f, 0.001f   20.0f, 0.004297f
+        PID_struct_init(&pid_spd[i], POSITION_PID, 16384.0f, 2000.0f, 22.0f, 0.01399f, 0.0f);		//速度环PID（pid结构体，PID类型，最大输出，比例限制，P , I , D ）
 
+	
+	
+	
+	
     PID_struct_init(&pid_imu[0], POSITION_PID, 10000, 0, 1.5f, 0.01, 0);		//roll
 
     PID_struct_init(&pid_imu[1], POSITION_PID, 10000, 0, 1.5f, 0.01, 0);		//pitch
@@ -68,8 +79,8 @@ void pid_param_init(void)
     PID_struct_init(&pid_climbing, POSITION_PID, 10000, 0, 3.5f, 0, 0);		//yaw
 
     PID_struct_init(&pid_test1, POSITION_PID, 10000, 0, 1.5f, 0, 0);		//yaw
-	
-	 PID_struct_init(&pid_openmv_dev, POSITION_PID, 10000, 0, 1.5f, 0, 0);		//yaw
+
+    PID_struct_init(&pid_openmv_dev, POSITION_PID, 10000, 0, 1.5f, 0, 0);		//yaw
 }
 
 //发送底盘电机控制命令

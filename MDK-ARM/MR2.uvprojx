@@ -637,6 +637,11 @@
               <FileType>1</FileType>
               <FilePath>..\User\APP\navigation.c</FilePath>
             </File>
+            <File>
+              <FileName>logicalflow_task.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\APP\logicalflow_task.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

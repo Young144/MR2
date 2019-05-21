@@ -10,6 +10,8 @@
 #ifndef __ROBOCON_H
 #define __ROBOCON_H
 
+
+
 /* ϵͳ ------------------------------------------------------------------*/
 #include "stm32f4xx_hal.h"
 
@@ -39,6 +41,7 @@
 #include "debug.h"
 #include "navigation.h"
 #include "Remote_Control.h"
+#include "logicalflow_task.h"
 /* AHRS ------------------------------------------------------------------*/
 #include "imu.h"
 #include "mti30.h"
@@ -52,4 +55,6 @@
 #include "bsp_can.h"
 #include "pid.h"
 #include "vcan.h"
+
+
 #endif /* __ROBOCON_H */

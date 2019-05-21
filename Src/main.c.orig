@@ -89,7 +89,7 @@ int main(void)
     //f=Tck/(psc+1)*(arr+1) 定时器时钟为90M  50Hz=180MHz/(90*20000)
     Servo_Init(20000-1,90-1);//舵机PWM通道初始化
 
-		//TIM2_CH3_Cap_Init(0XFFFFFFFF,90-1); //PWM捕获 以1MHZ的频率计数 
+    //TIM2_CH3_Cap_Init(0XFFFFFFFF,90-1); //PWM捕获 以1MHZ的频率计数
 
     Servo1_DOWN;//舵机1复位
     Servo2_DOWN_POS;//舵机2复位
@@ -186,7 +186,7 @@ void start_task(void *pvParameters)
 }
 
 
-/*********传感器端口说说明********************
+/*********传感器端口说明********************
 *
 *舵机说明：1号（升杆舵机）H:PD12		2号（令牌舵机）G:PD13		3号（解锁舵机）F:PD14
 *
@@ -209,7 +209,7 @@ void start_task(void *pvParameters)
 //#define RED_GROUNG 0
 //#define BLUE_GROUNG 1
 
-bool GROUND_SELECT=RED_GROUNG;  //红蓝场选择
+//bool GROUND_SELECT=BLUE_GROUNG;  //红蓝场选择
 
 /**
 *		控制整个比赛的逻辑过程 逻辑流控制
@@ -219,6 +219,8 @@ void LogicalFlow_task(void *pvParameters)
     for(;;) {
 
         IndicateLED_Off;
+
+        //KeyToken_Test();
 
         while(1)
         {
@@ -233,30 +235,37 @@ void LogicalFlow_task(void *pvParameters)
 
             else if(keyRestart2==0) //重启2 V:PA3
                 goto restart2;
+						
+						else if(keyRestartclimb==0) //重启climb
+                goto restartclimb;
         }
 
-restart1:
 
-        while(keyToken!=0) //等待限位开关按下去 令牌落下 A  PI0
+        while((keyInf2!=0)) //等待限位开关按下去 令牌落下 A  PI0
             vTaskDelay(500);
 
         IndicateLED_On;
-				
-				vTaskDelay(800);  				//等待 mr1走
+
+        vTaskDelay(1000);  				//等待 mr1走
+
+
+
+        //Climbing_Comb();  //上坡测试程序
+
+restart1:
 
         state = STOP;
-        vTaskDelay(500);
+        vTaskDelay(800);
 
         IndicateLED_Off;
 
-				//Climbing_Test();  //上坡测试程序
-
-        //ACTION初始方向角为0 左偏为正 右偏为负
-				
         yaw_set=0;  //------航向角设定为0
         LinearCorrection=normal_correction;		//打开直线矫正
-        now_time=times;
+        //now_time=times;
         state = TROT;		//小跑步态
+
+
+        vTaskDelay(1000);
 
         OpenMvInspect(openmv_Yellow);  // -------- 等待检测到转弯 黄色 --沙丘
 
@@ -288,9 +297,9 @@ restart1:
 
         OpenMvInspect(openmv_Yellow);
 
-        vTaskDelay(1300);
+        vTaskDelay(1000);
         state=REALSE;
-        vTaskDelay(500);
+        vTaskDelay(400);
 
         //---------------------越沙丘---------------------//
         StepOver();
@@ -307,6 +316,8 @@ restart1:
         if(GROUND_SELECT==RED_GROUNG) {  //红蓝场判断 红场
             _rotate_angle=14;		//---------------------转向
             yaw_set=14;  //----------------航向角设定 14 补偿0
+            LinearCorrection=normal_correction;		//打开直线矫正
+            now_time=times;
             state = ROTAT_LEFT;
             while(imuinfo.ActVal[0]<=_rotate_angle)
                 osDelay(50);
@@ -314,17 +325,32 @@ restart1:
         else if(GROUND_SELECT==BLUE_GROUNG) {
             _rotate_angle=-14;		//---------------------转向
             yaw_set=-14;  //----------------航向角设定 14 补偿0
+            LinearCorrection=normal_correction;		//打开直线矫正
+            now_time=times;
             state = ROTAT_RIGHT;
             while(imuinfo.ActVal[0]>=_rotate_angle)
                 osDelay(50);
         }
+				
+restart2:
 
         state= STOP;
-        vTaskDelay(500);
+        vTaskDelay(400);
 
-restart2:
-        //now_time=times;
+
+        if(GROUND_SELECT==RED_GROUNG)  //红蓝场判断 红场
+            yaw_set=14;  //----------------航向角设定 14 补偿0
+        else if(GROUND_SELECT==BLUE_GROUNG)
+            yaw_set=-14;  //----------------航向角设定 14 补偿0
+
+        LinearCorrection=normal_correction;		//打开直线矫正
+        now_time=times;
+
         state= TROT;		//继续走直到转弯检测
+
+
+        vTaskDelay(1600);
+
 
         OpenMvInspect(openmv_Yellow); //等待检测到黄色 色块----------越绳子检测
 
@@ -333,15 +359,15 @@ restart2:
         state=REALSE;
 
         if(GROUND_SELECT==RED_GROUNG) {  //红蓝场判断 红场
-            _rotate_angle=0-1;		//-------------转向-----------正对绳子-------
-            yaw_set=0-1;
+            _rotate_angle=0-0;		//-------------转向-----------正对绳子-------
+            yaw_set=0-0;
             state = ROTAT_RIGHT;
             while(imuinfo.ActVal[0]>=_rotate_angle)
                 osDelay(20);
         }
         else if(GROUND_SELECT==BLUE_GROUNG) {
-            _rotate_angle=0+1;		//-------------转向-----------正对绳子-------
-            yaw_set=0+1;
+            _rotate_angle=0+0;		//-------------转向-----------正对绳子-------
+            yaw_set=0+0;
             state = ROTAT_LEFT;
             while(imuinfo.ActVal[0]<=_rotate_angle)
                 osDelay(20);
@@ -352,12 +378,12 @@ restart2:
         IndicateLED_Off;
 
         state=TEST6;				//小碎步
-        vTaskDelay(3500);
+        vTaskDelay(2500);
 
         state=REALSE;
 
         //---------------------跨绳子---------------------//
-				LinearCorrection=test1_correction;		//打开跨绳子时候的步态纠偏
+        LinearCorrection=test1_correction;		//打开跨绳子时候的步态纠偏
         CrossTheLine();
 
         yaw_set=0-0; //航向角设定 0 补偿-0
@@ -365,39 +391,12 @@ restart2:
         state=TEST1;
         vTaskDelay(1500);
 
+				restartclimb:
         state= STOP;
 
         //...上坡------------
-        while(keyInf1!=0||keyInf2!=0) //第一段完成-------等待光电开关--进入爬坡程序-----
-            vTaskDelay(500);
+        Climbing_Comb();
 
-        LinearCorrection=Deny;
-        LinearCorrection=climbing_correction;
-
-        yaw_set=imuinfo.ActVal[0];//设定当前角度为前进方向
-        now_time=times;
-        climbing_offset_flag=YES;
-        _climbing_offset_angle=15;
-        state= CLIMBING;
-
-        vTaskDelay(5000);  //延时3000
-
-        OpenMvInspect(openmv_Red);  //等待检测到红色 色块 摄像头已经检测到了爬到了坡顶
-
-        IndicateLED_On;
-
-        vTaskDelay(3500);  //延时3000
-
-        IndicateLED_Off;
-
-        state= STOP;
-
-        Servo3_OPEN;  //锁位舵机打开
-
-        Servo1_PEAK; //舵机一高位
-        vTaskDelay(200);
-
-        Servo2_PEAK_POS;//舵机二高位
 
         while(1)		//停
             vTaskDelay(500);
@@ -431,7 +430,7 @@ void Test_task(void *pvParameters)
                 taskEXIT_CRITICAL();            //退出临界区
 
                 IndicateLED_Off;
-														
+
             }
         }
 
@@ -451,7 +450,7 @@ void Test_task(void *pvParameters)
         printf("Yaw %f step_len_dev %f 偏心度%f  白线角%f  色块%f \r\n",imuinfo.ActVal[0],step_len_dev,openmvinfo.ActVal[0],openmvinfo.ActVal[1],openmvinfo.ActVal[2]);
 
 //				printf(" CCR1 %d  CCR2 %d  CCR3 %d\r\n",(int)TIM4->CCR1,(int)TIM4->CCR2,(int)TIM4->CCR3);
-//				printf(" tockenA %d startB %d restart1U %d restart2V %d restart3W %d inf1S %d inf2T %d\r\n",HAL_GPIO_ReadPin(GPIOI,GPIO_PIN_0),HAL_GPIO_ReadPin(GPIOH,GPIO_PIN_12),HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_2),HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_3),HAL_GPIO_ReadPin(GPIOI,GPIO_PIN_5),HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_0),HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_1));
+//        printf(" tockenA %d startB %d restart1U %d restart2V %d restart3W %d inf1S %d inf2T %d\r\n",HAL_GPIO_ReadPin(GPIOI,GPIO_PIN_0),HAL_GPIO_ReadPin(GPIOH,GPIO_PIN_12),HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_2),HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_3),HAL_GPIO_ReadPin(GPIOI,GPIO_PIN_5),HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_0),HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_1));
 
 //        printf("步高 %2.1f  ",state_detached_params[state].detached_params_0.stance_height);
 //        printf("步长 %2.1f  ",state_detached_params[state].detached_params_0.step_length);

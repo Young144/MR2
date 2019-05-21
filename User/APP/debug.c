@@ -186,7 +186,13 @@ void InterpretCommand(void)
         TIM4->CCR3-=20;
         break;
 
-
+		    case 0x30:
+        test_speed+=1000;
+        break;
+		    case 0x31:
+        test_speed-=1000;
+        break;				
+				
 //        case 'E':
 //            state = STOP;
 //            vTaskDelay(100);

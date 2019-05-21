@@ -55,7 +55,7 @@ void navigation_execute(void)
 
         step_len_dev=pid_calc(&pid_imu[2],imuinfo.ActVal[0],yaw_set);  //计算陀螺仪yaw轴角度，输出给两腿腿部差速 保持角度
 
-				float _dev_limit = 16.0;
+        float _dev_limit = 16.0;
         if(step_len_dev>_dev_limit)	step_len_dev=_dev_limit;
         else if(step_len_dev<-_dev_limit)	step_len_dev=-_dev_limit;
 
@@ -81,9 +81,9 @@ void navigation_execute(void)
     else if(LinearCorrection==test1_correction)
     {
         //test1步态 纠偏
-        step_len_dev=pid_calc(&pid_test1,imuinfo.ActVal[0]/1.8,yaw_set/1.8);  //计算陀螺仪yaw轴角度，输出给两腿腿部差速 保持角度
-				
-				float _dev_limit = 6.0;
+        step_len_dev=pid_calc(&pid_test1,imuinfo.ActVal[0]/1.0,yaw_set/1.0);  //计算陀螺仪yaw轴角度，输出给两腿腿部差速 保持角度
+
+        float _dev_limit = 12.0;
         if(step_len_dev>_dev_limit)	step_len_dev=_dev_limit;
         else if(step_len_dev<-_dev_limit)	step_len_dev=-_dev_limit;
 

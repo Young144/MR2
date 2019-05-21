@@ -191,7 +191,10 @@ void get_moto_measure(moto_measure_t *ptr, CAN_HandleTypeDef* hcan)
     ptr->angle = (uint16_t)(hcan->pRxMsg->Data[0]<<8 | hcan->pRxMsg->Data[1]) ;
     ptr->real_current  = (int16_t)(hcan->pRxMsg->Data[2]<<8 | hcan->pRxMsg->Data[3]);
     ptr->speed_rpm = ptr->real_current;	//这里是因为两种电调对应位不一样的信息
-    ptr->given_current = (int16_t)(hcan->pRxMsg->Data[4]<<8 | hcan->pRxMsg->Data[5])/-5;
+    //ptr->given_current = (int16_t)(hcan->pRxMsg->Data[4]<<8 | hcan->pRxMsg->Data[5]);///-5;
+	 ptr->given_current = (short)(hcan->pRxMsg->Data[4]<<8 | hcan->pRxMsg->Data[5]) / 819.2;//获取电流(mm/s)
+	 //(ptr)->given_current = (uint16_t)((rx_message)->Data[4] << 8 | (rx_message)->Data[5]); 
+		//ptr->given_current = (hcan->pRxMsg->Data[4]<<8 | hcan->pRxMsg->Data[5])*5.f/16384.f;//获得转矩
     ptr->hall = hcan->pRxMsg->Data[6];
     if(ptr->angle - ptr->last_angle > 4096)
         ptr->round_cnt --;

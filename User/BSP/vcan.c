@@ -11,35 +11,62 @@
 
 uint8_t VcanTxBuff[20]= {0};
 short  wave_form_data[8] = {0};
-
+float temp_3;
 void vcan_send_byte(uint8_t date);
 void Vcan_Send_Wave_Data(void);
 
+void send_data(uint8_t date)
+{
+    HAL_UART_Transmit(&huart2,&date,1,10);
+    //while( USART_GetFlagStatus(USART1,USART_FLAG_TC)!= SET);
+
+}
+
+void shanwai_send_wave_form(void)
+{
+    uint8_t i;
+
+    send_data(0x03);
+    send_data(0xfc);
+    for(i = 0; i<6; i++)
+    {
+        send_data((wave_form_data[i]&0xff)); //现发送低位在发送高位
+        send_data((wave_form_data[i]>>8));
+
+    }
+    send_data(0xfc);
+    send_data(0x03);
+}
 
 void VcanGC_task(void *pvParameters)
 {
-    extern int count;
+
     for(;;)
     {
-        wave_form_data[0] =(char)imuinfo.ActVal[2];
-        wave_form_data[1] =(char)imuinfo.ActVal[1];
-        wave_form_data[2] =(char)imuinfo.ActVal[0];
-        wave_form_data[3] =10;
-//        wave_form_data[4] =moto_chassis[4].total_angle/ReductionAndAngleRatio;
-//        wave_form_data[5] =moto_chassis[5].total_angle/ReductionAndAngleRatio;
-//        wave_form_data[6] =moto_chassis[6].total_angle/ReductionAndAngleRatio;
-//        wave_form_data[7] =moto_chassis[7].total_angle/ReductionAndAngleRatio;
+			
+        wave_form_data[0] =test_speed;			
+        wave_form_data[1] =moto_chassis[0].speed_rpm;
+			
+        wave_form_data[2] =temp_pid.ref_agle[0];
+        wave_form_data[3] =moto_chassis[0].total_angle;
+			
+				wave_form_data[4] =temp_pid.out[0];
+        wave_form_data[5] =moto_chassis[0].given_current;///16384.0f*20.0f*10;  //65447
+			
+        wave_form_data[6] =moto_chassis[0].hall;
+
+        wave_form_data[7] =7;//moto_chassis[0].given_current;
 
         Vcan_Send_Wave_Data();
-        vTaskDelay(200);
+        vTaskDelay(20);
     }
 
 }
 
 void Vcan_Send_Wave_Data(void)
 {
-    VcanTxBuff[0]=0x03;
-    VcanTxBuff[1]=0xfc;
+//    VcanTxBuff[0]=0x03;
+//    VcanTxBuff[1]=0xfc;
 
 //    VcanTxBuff[2]=(wave_form_data[0]&0xff);
 //    VcanTxBuff[3]=(wave_form_data[0]>>8);
@@ -57,15 +84,27 @@ void Vcan_Send_Wave_Data(void)
 //    VcanTxBuff[15]=(wave_form_data[6]>>8);
 //    VcanTxBuff[16]=(wave_form_data[7]&0xff);
 //    VcanTxBuff[17]=(wave_form_data[7]>>8);
-	
-for(int i =0;i<12;i++)
-  VcanTxBuff[i+2]=imuinfo.data[11-i];
+//
+////for(int i =0;i<12;i++)
+////  VcanTxBuff[i+2]=imuinfo.data[11-i];
 
 
-    VcanTxBuff[14]=0xfc;
-    VcanTxBuff[15]=0x03;
+//    VcanTxBuff[14]=0xfc;
+//    VcanTxBuff[15]=0x03;
 
+    send_data(0x03);
+    send_data(0xfc);
+    for(int i = 0; i<=7; i++)
+    {
+        send_data((wave_form_data[i]&0xff)); //现发送低位在发送高位
+        send_data((wave_form_data[i]>>8));
+    }
+    send_data(0xfc);
+    send_data(0x03);
 
-    HAL_UART_Transmit_DMA(&huart8, (uint8_t*)&VcanTxBuff, sizeof(VcanTxBuff));
+    //HAL_UART_Transmit(&huart2,(uint8_t*)&VcanTxBuff, sizeof(VcanTxBuff),1000);//发送串口
+    // HAL_UART_Transmit_DMA(&huart8, (uint8_t*)&VcanTxBuff, sizeof(VcanTxBuff));
 
 }
+
+

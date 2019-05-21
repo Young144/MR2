@@ -6,6 +6,7 @@
 *组合动作 放在这里写了
 *有：		JUMP		开始动作		结束动作		越障		过程逻辑
 */
+bool GROUND_SELECT=BLUE_GROUNG;  //红蓝场选择
 
 void StepOver(void)
 {
@@ -47,8 +48,8 @@ void StepOver(void)
     state=REALSE;		//释放
     vTaskDelay(500);
 
-    x = 19*sin(28*PI/180);		//后两个腿 小站 向前走
-    y = 19*cos(28*PI/180);
+    x = 18.6*sin(28*PI/180);		//后两个腿 小站 向前走
+    y = 18.6*cos(28*PI/180);
     CartesianToTheta(1.0);
     SetCoupledPosition(2);
     SetCoupledPosition(3);
@@ -107,6 +108,7 @@ void StepOver_one_leg(int LegId)
         rev_legid=2 ;
         y = 25 ;
     }
+
     else if(LegId==2) {
         rev_legid=1 ;
         y = 25;
@@ -124,22 +126,45 @@ void StepOver_one_leg(int LegId)
 
     if(LegId==3)
     {
-        x = -21*sin(15*PI/180);
-        y = 21*cos(15*PI/180);
-        CartesianToTheta(1.0);
-        SetCoupledPosition(1);
 
-        x = -18*sin(17*PI/180);
-        y = 18*cos(17*PI/180);
-        CartesianToTheta(1.0);
-        SetCoupledPosition(0);
+        if(GROUND_SELECT==RED_GROUNG) {  //红蓝场判断 红场
 
-        x = 22*sin(10*PI/180);
-        y = 22*cos(40*PI/180)-4;		//高度保持
-        CartesianToTheta(1.0);
-        SetCoupledPosition(2);
+            x = -18*sin(17.2*PI/180);
+            y = 18*cos(17.2*PI/180);
+            CartesianToTheta(1.0);
+            SetCoupledPosition(0);
 
-        vTaskDelay(800);
+            x = -21*sin(15*PI/180);
+            y = 21*cos(15*PI/180);
+            CartesianToTheta(1.0);
+            SetCoupledPosition(1);
+
+            x = 22*sin(10*PI/180);
+            y = 22*cos(40*PI/180)-4;		//高度保持
+            CartesianToTheta(1.0);
+            SetCoupledPosition(2);
+
+            vTaskDelay(1500);
+        }
+        else if(GROUND_SELECT==BLUE_GROUNG) {
+
+            x = -18*sin(17.2*PI/180);
+            y = 18*cos(17.2*PI/180);
+            CartesianToTheta(1.0);
+            SetCoupledPosition(0);
+
+            x = -21*sin(15*PI/180);
+            y = 21*cos(15*PI/180);
+            CartesianToTheta(1.0);
+            SetCoupledPosition(1);
+
+            x = 22*sin(10*PI/180);
+            y = 22*cos(40*PI/180)-4;		//高度保持
+            CartesianToTheta(1.0);
+            SetCoupledPosition(2);
+
+            vTaskDelay(1300);
+        }
 
     }
 
@@ -214,7 +239,7 @@ void CrossTheLine(void)
 
     now_time=times;
     state=TEST1;  //------------向前走让后腿接触绳子
-    vTaskDelay(2200);
+    vTaskDelay(1900);
     state=REALSE;
 
     CrossTheLine_one_leg(2);		//跨2
@@ -246,7 +271,7 @@ void CrossTheLine(void)
 
     now_time=times;
     state=TEST1;  //跨绳子步态
-    vTaskDelay(2000);
+    vTaskDelay(1900);
     state=REALSE;
 
     CrossTheLine_one_leg(2);
@@ -273,38 +298,38 @@ void CrossTheLine_one_leg(int LegId)
     else if(LegId==2) rev_legid=1;
     else if(LegId==3) rev_legid=0;
     x = 0;
-    y = 24.5;
+    y = 24.2;
     CartesianToTheta(1.0);
     SetCoupledPosition(rev_legid);
-    vTaskDelay(150);
+    vTaskDelay(200);
 
     //当前腿先向下蹬一下保持平衡//
     x = 0;
-    y = 29;
+    y = 29.5;
     CartesianToTheta(1.0);
     SetCoupledPosition(LegId);
-    vTaskDelay(800);
+    vTaskDelay(1000);
 
     //--------腿最长到后面--------//
     x = -24*sin(80*PI/180);
     y = 24*cos(80*PI/180);
     CartesianToTheta(1.0);
     SetCoupledPosition(LegId);
-    vTaskDelay(400);
+    vTaskDelay(300);
 
     //--------腿缩最短在后面--------//
     x = -10*sin(80*PI/180);
     y = 10*cos(80*PI/180);
     CartesianToTheta(1.0);
     SetCoupledPosition(LegId);
-    vTaskDelay(400);
+    vTaskDelay(380);
 
     //--------腿最短状态向前--------//
     x = 10*sin(75*PI/180);
     y = 10*cos(75*PI/180);
     CartesianToTheta(1.0);
     SetCoupledPosition(LegId);
-    vTaskDelay(400);
+    vTaskDelay(380);
 
     //--------腿伸长向前--------//
     x = 24*sin(70*PI/180);
@@ -318,7 +343,7 @@ void CrossTheLine_one_leg(int LegId)
     y = 29*cos(1*PI/180);
     CartesianToTheta(1.0);
     SetCoupledPosition(LegId);
-    vTaskDelay(300);
+    vTaskDelay(200);
 
     //------四个腿恢复初始位置-----//
     x = 0;
@@ -360,51 +385,100 @@ void OpenMvInspect(int color)
 
 float OpenMv_Line_Dec(void)
 {
-	
+
 //	float dev_calc_ang;
-//	
-//	dev_calc_ang = pid_calc(&pid_openmv_dev,openmvinfo.ActVal[0],); 
-//	
-//	
+//
+//	dev_calc_ang = pid_calc(&pid_openmv_dev,openmvinfo.ActVal[0],);
+//
+//
 //	return
 }
-void Climbing_Test(void)
+
+void KeyToken_Test(void)
 {
-	
-	        //-------------------    爬坡测试程序  ------------------------//
-        while(keyInf1!=0||keyInf2!=0) //第一段完成-------等待光电开关--进入爬坡程序-----
-            vTaskDelay(500);
+    while(1)
+    {
 
-        LinearCorrection=Deny;
-				LinearCorrection=climbing_correction;
-
-        yaw_set=imuinfo.ActVal[0];//设定当前角度为前进方向
-        now_time=times;
-        climbing_offset_flag=YES;
-        _climbing_offset_angle=15;
-        state= CLIMBING;
-
-				vTaskDelay(5000);  //延时3000
-
-        OpenMvInspect(openmv_Red);  //等待检测到红色 色块 摄像头已经检测到了爬到了坡顶
-
-        IndicateLED_On;
-
-        vTaskDelay(3500);  //延时3000
-
-        IndicateLED_Off;
-
-        state= STOP;
-
-        Servo3_OPEN;  //锁位舵机打开
-
-        Servo1_PEAK; //舵机一高位
+        if(keyToken==0) {
+            IndicateLED_On;
+        }
+        else if(keyToken==1) {
+            IndicateLED_Off;
+        }
         vTaskDelay(200);
+    }
 
-        Servo2_PEAK_POS;//舵机二高位
+}
+void Climbing_Comb(void)
+{
 
-        while(1)		//停
-            vTaskDelay(500);
+    IndicateLED_On;
+    //...上坡------------
+    while(keyInf1!=0) //第一段完成-------等待光电开关--进入爬坡程序-----
+        vTaskDelay(500);
+
+    IndicateLED_Off;
+
+    LinearCorrection=Deny;
+    LinearCorrection=climbing_correction;
+
+    yaw_set=imuinfo.ActVal[0];//设定当前角度为前进方向
+    now_time=times;
+    climbing_offset_flag=YES;
+    _climbing_offset_angle=15;
+    state= CLIMBING;
+
+    vTaskDelay(5000);  //延时3000
+
+    OpenMvInspect(openmv_Red);  //等待检测到红色 色块 摄像头已经检测到了爬到了坡顶
+
+    IndicateLED_On;
+
+    vTaskDelay(3300);  //延时3000
+
+    IndicateLED_Off;
+
+    state_detached_params[CLIMBING].detached_params_0.stance_height+=2;
+    state_detached_params[CLIMBING].detached_params_1.stance_height+=2;
+    vTaskDelay(300);
+
+    state_detached_params[CLIMBING].detached_params_0.stance_height+=2;
+    state_detached_params[CLIMBING].detached_params_1.stance_height+=2;
+    vTaskDelay(300);
+
+    state_detached_params[CLIMBING].detached_params_0.stance_height+=2;
+    state_detached_params[CLIMBING].detached_params_1.stance_height+=2;
+    vTaskDelay(300);
+
+    state_detached_params[CLIMBING].detached_params_0.stance_height+=2;
+    state_detached_params[CLIMBING].detached_params_1.stance_height+=2;
+    vTaskDelay(300);
+
+    state_detached_params[CLIMBING].detached_params_0.stance_height+=2;
+    state_detached_params[CLIMBING].detached_params_1.stance_height+=2;
+    vTaskDelay(300);
+
+    state= REALSE;
+    vTaskDelay(300);
+
+    x=0;
+    y = 29;
+    CartesianToTheta(1.0);
+    LegGain gains = {17.5, 0.00, 30.0, 0.00};
+    CommandAllLegs(gains);
+
+    vTaskDelay(300);
+
+    Servo3_OPEN;  //锁位舵机打开
+
+    Servo1_PEAK; //舵机一高位
+    vTaskDelay(200);
+
+    Servo2_PEAK_POS;//舵机二高位
+
+    state= REALSE;
+
+    vTaskDelay(400);
 
 }
 

@@ -46,6 +46,7 @@
 ".\mr2\posture_ctrl.o"
 ".\mr2\combinations.o"
 ".\mr2\navigation.o"
+".\mr2\logicalflow_task.o"
 ".\mr2\mti30.o"
 ".\mr2\imu.o"
 ".\mr2\bsp_uart.o"
