@@ -11,7 +11,7 @@
 
 uint8_t VcanTxBuff[20]= {0};
 short  wave_form_data[8] = {0};
-
+float temp_3;
 void vcan_send_byte(uint8_t date);
 void Vcan_Send_Wave_Data(void);
 
@@ -43,20 +43,22 @@ void VcanGC_task(void *pvParameters)
 
     for(;;)
     {
-        wave_form_data[0] =moto_chassis[0].speed_rpm;
+			
+        wave_form_data[0] =test_speed;			
+        wave_form_data[1] =moto_chassis[0].speed_rpm;
+			
+        wave_form_data[2] =temp_pid.ref_agle[0];
+        wave_form_data[3] =moto_chassis[0].total_angle;
+			
+				wave_form_data[4] =temp_pid.out[0];
+        wave_form_data[5] =moto_chassis[0].given_current;///16384.0f*20.0f*10;  //65447
+			
+        wave_form_data[6] =moto_chassis[0].hall;
 
-        wave_form_data[1] =moto_chassis[0].total_angle;
-        wave_form_data[2] =moto_chassis[0].given_current;
-        wave_form_data[3] =moto_chassis[0].speed_rpm;
-			
-			        wave_form_data[4] =4;
-        wave_form_data[5] =5;
-        wave_form_data[6] =6;
-			
-        wave_form_data[7] =7;
+        wave_form_data[7] =7;//moto_chassis[0].given_current;
 
         Vcan_Send_Wave_Data();
-        vTaskDelay(200);
+        vTaskDelay(20);
     }
 
 }

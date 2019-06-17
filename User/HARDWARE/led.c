@@ -30,6 +30,26 @@ void led_configuration(void)
 }
 
 
+void IndLED_On(int color)
+{
+    if(color == IndColorRed)
+        HAL_GPIO_WritePin(GPIOI,GPIO_PIN_2,GPIO_PIN_SET);
+
+    else if(color == IndColorBlue)
+        HAL_GPIO_WritePin(GPIOA,GPIO_PIN_4,GPIO_PIN_SET);
+
+    else if(color == IndColorGreen)
+        HAL_GPIO_WritePin(GPIOA,GPIO_PIN_5,GPIO_PIN_SET);
+
+}
+void IndLED_Off(void)
+{
+    HAL_GPIO_WritePin(GPIOI,GPIO_PIN_2,GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(GPIOA,GPIO_PIN_4,GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(GPIOA,GPIO_PIN_5,GPIO_PIN_RESET);
+}
+
+
 void led_green_off(void)
 {
     HAL_GPIO_WritePin(GPIOF,GPIO_PIN_14,GPIO_PIN_SET);

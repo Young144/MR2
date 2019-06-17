@@ -58,6 +58,9 @@ extern TIM_HandleTypeDef TIM3_Handler;      //定时器句柄
 extern uint8_t  TIM2CH3_CAPTURE_STA;	//输入捕获状态		    				
 extern uint32_t	TIM2CH3_CAPTURE_VAL;	//输入捕获值(TIM2/TIM2是32位)
 
+extern u32 temp_cap_tim2;
+extern u16 ppm_rx[10];//ppm_rx[0]   1   接收到ppm数据
+
 void TIM2_CH3_Cap_Init(uint32_t arr,uint16_t psc);
 
 /* USER CODE BEGIN Prototypes */

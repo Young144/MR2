@@ -43,16 +43,16 @@ void VcanGC_task(void *pvParameters)
 
     for(;;)
     {
-			
-        wave_form_data[0] =test_speed;			
+
+        wave_form_data[0] =test_speed;
         wave_form_data[1] =moto_chassis[0].speed_rpm;
-			
+
         wave_form_data[2] =temp_pid.ref_agle[0];
         wave_form_data[3] =moto_chassis[0].total_angle;
-			
-				wave_form_data[4] =temp_pid.out[0];
-        wave_form_data[5] =moto_chassis[0].given_current;///16384.0f*20.0f*10;  //65447
-			
+
+        wave_form_data[4] =moto_chassis[0].given_current;
+        wave_form_data[5] =moto_chassis[0].real_current;
+
         wave_form_data[6] =moto_chassis[0].hall;
 
         wave_form_data[7] =7;//moto_chassis[0].given_current;

@@ -338,7 +338,7 @@
               <MiscControls></MiscControls>
               <Define>USE_HAL_DRIVER,STM32F427xx</Define>
               <Undefine></Undefine>
-              <IncludePath>../Inc;../Drivers/STM32F4xx_HAL_Driver/Inc;../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS;../Drivers/CMSIS/Include;../Drivers/CMSIS/Device/ST/STM32F4xx/Include;..\User\AHRS;..\User\APP;..\User\BSP;..\User\HARDWARE</IncludePath>
+              <IncludePath>../Inc;../Drivers/STM32F4xx_HAL_Driver/Inc;../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS;../Drivers/CMSIS/Include;../Drivers/CMSIS/Device/ST/STM32F4xx/Include;..\User\AHRS;..\User\APP;..\User\BSP;..\User\HARDWARE;..\User\TASK</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -603,44 +603,59 @@
               <FilePath>../Src/main.c</FilePath>
             </File>
             <File>
-              <FileName>debug.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\APP\debug.c</FilePath>
-            </File>
-            <File>
-              <FileName>moto_ctrl.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\APP\moto_ctrl.c</FilePath>
-            </File>
-            <File>
-              <FileName>detect_task.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\APP\detect_task.c</FilePath>
-            </File>
-            <File>
-              <FileName>remote_control.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\APP\remote_control.c</FilePath>
-            </File>
-            <File>
-              <FileName>posture_ctrl.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\User\APP\posture_ctrl.c</FilePath>
-            </File>
-            <File>
               <FileName>combinations.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\APP\combinations.c</FilePath>
             </File>
             <File>
-              <FileName>navigation.c</FileName>
+              <FileName>jump.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\APP\navigation.c</FilePath>
+              <FilePath>..\User\APP\jump.c</FilePath>
             </File>
+            <File>
+              <FileName>power_ctrl.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\APP\power_ctrl.c</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>TASK</GroupName>
+          <Files>
             <File>
               <FileName>logicalflow_task.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\User\APP\logicalflow_task.c</FilePath>
+              <FilePath>..\User\TASK\logicalflow_task.c</FilePath>
+            </File>
+            <File>
+              <FileName>posture_ctrl.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\TASK\posture_ctrl.c</FilePath>
+            </File>
+            <File>
+              <FileName>navigation.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\TASK\navigation.c</FilePath>
+            </File>
+            <File>
+              <FileName>remote_control.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\TASK\remote_control.c</FilePath>
+            </File>
+            <File>
+              <FileName>moto_ctrl.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\TASK\moto_ctrl.c</FilePath>
+            </File>
+            <File>
+              <FileName>detect_task.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\TASK\detect_task.c</FilePath>
+            </File>
+            <File>
+              <FileName>debug.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\TASK\debug.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -701,6 +716,16 @@
               <FileName>led.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\User\HARDWARE\led.c</FilePath>
+            </File>
+            <File>
+              <FileName>stepmotor.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\HARDWARE\stepmotor.c</FilePath>
+            </File>
+            <File>
+              <FileName>robomoudle.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\User\HARDWARE\robomoudle.c</FilePath>
             </File>
           </Files>
         </Group>

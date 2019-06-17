@@ -38,6 +38,9 @@ uint8_t _count_imu=0;
 
 openmvdata openmvinfo;
 
+openmvdata openmv2info;
+
+
 ps2data ps2info;
 
 float _Pitch_initial,_Roll_initial,_Pitch_rev,_Roll_rev;
@@ -101,29 +104,36 @@ void usart2_callback_handler( openmvdata *openmvdata, uint8_t *buff)
 
 }
 
-void usart3_callback_handler( ps2data *ps2data, uint8_t *buff)
+void usart3_callback_handler( openmvdata *openmv2data, uint8_t *buff)
 {
 
-    uint8_t datasum=0;
-    for(int i=2; i<8; i++)		//计算十二位数据位和一位校验位的和
-        datasum+=buff[i];
+//    uint8_t datasum=0;
+//    for(int i=2; i<8; i++)		//计算十二位数据位和一位校验位的和
+//        datasum+=buff[i];
 
-    if(datasum==0xff) 		//校验和算法 ：取最后一个字节如果为ff 检验通过
+//    if(datasum==0xff) 		//校验和算法 ：取最后一个字节如果为ff 检验通过
+//    {
+//        ps2data->KEY_VALUE = buff[2];
+//        ps2data->PSS_LX_VALUE = buff[3];
+//        ps2data->PSS_LY_VALUE = buff[4];
+//        ps2data->PSS_RX_VALUE = buff[5];
+//        ps2data->PSS_RY_VALUE = buff[6];
+
+//    }
+	
+	if(buff[0]==0xff&&buff[1]==0xfa)
     {
-        ps2data->KEY_VALUE = buff[2];
-        ps2data->PSS_LX_VALUE = buff[3];
-        ps2data->PSS_LY_VALUE = buff[4];
-        ps2data->PSS_RX_VALUE = buff[5];
-        ps2data->PSS_RY_VALUE = buff[6];
-
+        for(int i = 0; i<12; i++)
+            openmv2data->data[i] = buff[i+2];
     }
+		
 
 }
 
 void imu_callback_handler( imudata *imudata, uint8_t *buff)
 {
-	
-	
+
+
 //    if(buff[0]==0xfa&&buff[1]==0xff  mti30的数据解析部分
 //    {
 //        uint8_t datasum=0;
@@ -139,11 +149,11 @@ void imu_callback_handler( imudata *imudata, uint8_t *buff)
 
     if(buff[0]==0x0D&&buff[1]==0x0A)
     {
-			imu_rec_flag=1;
+        imu_rec_flag=1;
         for(int i = 0; i<12; i++)
             imudata->data[i] = buff[i+2];
     }
-		
+
     _count_imu++;
     imu_filter_data[_count_imu]=imudata->ActVal[0];
 
@@ -199,7 +209,7 @@ static void uart_rx_idle_callback(UART_HandleTypeDef* huart)
         __HAL_DMA_DISABLE(huart->hdmarx);
 
         if ((USART3_MAX_LEN - dma_current_data_counter(huart->hdmarx->Instance)) == USART3_BUFLEN)
-            usart3_callback_handler(&ps2info, usart3_buf);
+            usart3_callback_handler(&openmv2info, usart3_buf);
 
         /* restart dma transmission */
         __HAL_DMA_SET_COUNTER(huart->hdmarx, IMU_MAX_LEN);
@@ -232,8 +242,7 @@ static void uart_rx_idle_callback(UART_HandleTypeDef* huart)
         __HAL_DMA_ENABLE(huart->hdmarx);
 
     }
-
-
+	
 }
 
 
@@ -282,7 +291,7 @@ void uart_receive_init(UART_HandleTypeDef *huart)
         uart_receive_dma_no_it(&OPENMV_HUART, openmv_buf, OPENMV_MAX_LEN);
     }
 
-
+		
 }
 
 

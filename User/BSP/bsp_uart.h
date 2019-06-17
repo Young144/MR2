@@ -22,7 +22,7 @@
 #define USART2_HUART       huart2
 
 #define USART3_MAX_LEN     (50)
-#define USART3_BUFLEN      (8)
+#define USART3_BUFLEN      (16)
 #define USART3_HUART       huart3
 
 #define IMU_MAX_LEN     (50)
@@ -34,11 +34,13 @@
 #define OPENMV_HUART       huart7
 
 
+
 extern float _Pitch_initial,_Roll_initial,_Pitch_rev,_Roll_rev;
 
 
 extern uint8_t   imu_buf[IMU_BUFLEN];
 extern uint8_t   openmv_buf[OPENMV_BUFLEN];
+
 extern uint8_t   usart3_buf[USART3_BUFLEN];
 extern uint8_t   usart2_buf[USART2_BUFLEN];
 extern float yaw_calibrated;
@@ -59,6 +61,7 @@ typedef union _openmv_data
 } openmvdata;
 
 extern openmvdata openmvinfo ;
+extern openmvdata openmv2info ;
 
 typedef struct _ps2_data
 {

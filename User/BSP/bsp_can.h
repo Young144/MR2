@@ -80,10 +80,10 @@ typedef enum
 #define FILTER_BUF_LEN		5		//过滤器缓冲长度
 /*接收到的云台电机的参数结构体*/
 typedef struct {
-    int16_t	 	speed_rpm;  //转速  等于	real_current
-    int16_t  	real_current;//转子转速
-    int16_t  	given_current;//实际转矩电流
-    uint8_t  	hall;		//电机温度
+    int16_t	 	speed_rpm;  //转速  (反馈数据)
+    float  	real_current;//实际转矩电流(反馈数据)
+    int16_t  	given_current;//设定 转矩电流 输出数据
+    uint8_t  	hall;		//电机温度 (反馈数据)
     uint16_t 	angle;				//abs angle range:[0,8191]
     uint16_t 	last_angle;	//最新的角度
     uint16_t	offset_angle;//补偿角度
@@ -93,6 +93,7 @@ typedef struct {
     u16			angle_buf[FILTER_BUF_LEN];
     u16			fited_angle;		//波束角
     u32			msg_cnt; 		//消息计数
+
 } moto_measure_t;
 
 /* Extern  ------------------------------------------------------------------*/

@@ -20,6 +20,8 @@
 
 uint8_t   imu_buf[IMU_BUFLEN];
 
+bool imu_rec_flag;
+
 uint8_t   openmv_buf[OPENMV_BUFLEN];
 
 uint8_t   usart3_buf[USART3_BUFLEN];
@@ -30,14 +32,15 @@ imudata imuinfo;
 
 float imu_filter_data[10];
 
-float YAW_Calibrated;
-	
+float yaw_calibrated;
+
 uint8_t _count_imu=0;
 
 openmvdata openmvinfo;
 
 ps2data ps2info;
 
+float _Pitch_initial,_Roll_initial,_Pitch_rev,_Roll_rev;
 
 /**
   * @brief      enable global uart it and do not use DMA transfer done it
@@ -119,7 +122,9 @@ void usart3_callback_handler( ps2data *ps2data, uint8_t *buff)
 
 void imu_callback_handler( imudata *imudata, uint8_t *buff)
 {
-//    if(buff[0]==0xfa&&buff[1]==0xff)
+	
+	
+//    if(buff[0]==0xfa&&buff[1]==0xff  mti30的数据解析部分
 //    {
 //        uint8_t datasum=0;
 //        for(int i=7; i<20; i++)		//计算十二位数据位和一位校验位的和
@@ -131,28 +136,27 @@ void imu_callback_handler( imudata *imudata, uint8_t *buff)
 //                imudata->data[i] = buff[18-i];  //mti30的数据高字节在低地址 所以反向存储 ActVal 0 1 2分别为 YAW PITCH ROll
 //        }
 //    }
-	
-	    if(buff[0]==0x0D&&buff[1]==0x0A)
+
+    if(buff[0]==0x0D&&buff[1]==0x0A)
     {
-            for(int i = 0; i<12; i++)
-                imudata->data[i] = buff[i+2];  
+			imu_rec_flag=1;
+        for(int i = 0; i<12; i++)
+            imudata->data[i] = buff[i+2];
     }
 		
-		_count_imu++;
-		imu_filter_data[_count_imu]=imudata->ActVal[0];
-		
-		
-		
-		if(_count_imu==9){
-			_count_imu=0;
-			
-			for( int i=0; i<10 ;i++)
-			YAW_Calibrated+=imu_filter_data[i];
-			
-			YAW_Calibrated/=10;
-			
-		}
-			
+    _count_imu++;
+    imu_filter_data[_count_imu]=imudata->ActVal[0];
+
+    if(_count_imu==9) {
+        _count_imu=0;
+
+        for( int i=0; i<10 ; i++)
+            yaw_calibrated+=imu_filter_data[i];
+
+        yaw_calibrated/=10;
+
+    }
+
 
 }
 
@@ -287,7 +291,7 @@ void uart_receive_init(UART_HandleTypeDef *huart)
 //    int LX,LY,RX,RY;
 //		float CALC_LX,CALC_LY,CALC_RX,CALC_RY;
 //		float value,angle,angle_w;
-//	
+//
 //    LX=data->PSS_LX_VALUE-128;
 //    LY=data->PSS_LY_VALUE-128;
 //    RX=data->PSS_RX_VALUE-128;

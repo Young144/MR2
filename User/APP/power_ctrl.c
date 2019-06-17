@@ -1,48 +1,10 @@
+
 #include "power_ctrl.h"
-#include "stm32f4xx.h"
 
-void power_ctrl_configuration(void)
+
+void power_ctrl_on_all(void)
 {
-    GPIO_InitTypeDef GPIO_InitStructure;
+    HAL_GPIO_WritePin(GPIOH,GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5,GPIO_PIN_SET);  //¿ªÆôËÄ¸ö24VÊä³ö
 
-    RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOH, ENABLE);
-
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_2 | GPIO_Pin_3 | GPIO_Pin_4 | GPIO_Pin_5;
-    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_OUT;      //ï¿½ï¿½Í¨ï¿½ï¿½ï¿½Ä£Ê½
-    GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;     //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
-    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_100MHz; //100MHz
-    GPIO_InitStructure.GPIO_PuPd = GPIO_PuPd_UP;       //ï¿½ï¿½ï¿½ï¿½
-    GPIO_Init(GPIOH, &GPIO_InitStructure);             //ï¿½ï¿½Ê¼ï¿½ï¿½
-
-    for (uint8_t i = POWER1_CTRL_SWITCH; i < POWER4_CTRL_SWITCH + 1; i++)
-    {
-        power_ctrl_off(i);
-    }
 }
 
-void power_ctrl_on(uint8_t num)
-{
-    if (num > POWER4_CTRL_SWITCH)
-    {
-        return;
-    }
-    GPIO_SetBits(GPIOH, GPIO_Pin_2 << num);
-}
-
-void power_ctrl_off(uint8_t num)
-{
-    if (num > POWER4_CTRL_SWITCH)
-    {
-        return;
-    }
-    GPIO_ResetBits(GPIOH, GPIO_Pin_2 << num);
-}
-
-void power_ctrl_toggle(uint8_t num)
-{
-    if (num > POWER4_CTRL_SWITCH)
-    {
-        return;
-    }
-    GPIO_ToggleBits(GPIOH, GPIO_Pin_2 << num);
-}

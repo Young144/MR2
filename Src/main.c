@@ -3,65 +3,68 @@
 
 /* TASK ------------------------------------------------------------------*/
 
-#define START_TASK_PRIO		0		
-#define START_STK_SIZE 		128  			
-TaskHandle_t StartTask_Handler;		
-void start_task(void *pvParameters);		
+#define START_TASK_PRIO		0
+#define START_STK_SIZE 		128
+TaskHandle_t StartTask_Handler;
+void start_task(void *pvParameters);
 
-#define MotorControl_TASK_PRIO		4		
-#define MotorControl_STK_SIZE 		256  
-TaskHandle_t MotorControlTask_Handler;		
-void MotorControl_task(void *pvParameters);	
+#define MotorControl_TASK_PRIO		4
+#define MotorControl_STK_SIZE 		256
+TaskHandle_t MotorControlTask_Handler;
+void MotorControl_task(void *pvParameters);
 
-#define PostureControl_TASK_PRIO		5		
-#define PostureControl_STK_SIZE 		256 	 	
-TaskHandle_t PostureControlTask_Handler;		
-void PostureControl_task(void *pvParameters);		
+#define PostureControl_TASK_PRIO		5
+#define PostureControl_STK_SIZE 		256
+TaskHandle_t PostureControlTask_Handler;
+void PostureControl_task(void *pvParameters);
 
-#define Navi_TASK_PRIO		5		
-#define Navi_STK_SIZE 		256 	 	
-TaskHandle_t NaviTask_Handler;		
-void Navi_task(void *pvParameters);		
+#define Navi_TASK_PRIO		5
+#define Navi_STK_SIZE 		256
+TaskHandle_t NaviTask_Handler;
+void Navi_task(void *pvParameters);
 
-#define Detect_TASK_PRIO		3		
-#define Detect_STK_SIZE 		128 	 	
-TaskHandle_t DetectTask_Handler;		
-void Detect_task(void *pvParameters);		
+#define Detect_TASK_PRIO		6
+#define Detect_STK_SIZE 		128
+TaskHandle_t DetectTask_Handler;
+void Detect_task(void *pvParameters);
 
-#define Debug_TASK_PRIO		6		
-#define Debug_STK_SIZE 		256  
-TaskHandle_t DebugTask_Handler;		
-void Debug_task(void *pvParameters);		
+#define Debug_TASK_PRIO		6
+#define Debug_STK_SIZE 		256
+TaskHandle_t DebugTask_Handler;
+void Debug_task(void *pvParameters);
 
-#define Rc_TASK_PRIO		6		
-#define Rc_STK_SIZE 		256  	
-TaskHandle_t RcTask_Handler;		
-void Rc_task(void *pvParameters);		
+#define Rc_TASK_PRIO		6
+#define Rc_STK_SIZE 		256
+TaskHandle_t RcTask_Handler;
+void Rc_task(void *pvParameters);
 
-#define VcanGC_TASK_PRIO		6		
-#define VcanGC_STK_SIZE 		256 	 	
-TaskHandle_t VcanGCTask_Handler;		
-void VcanGC_task(void *pvParameters);		
+#define VcanGC_TASK_PRIO		6
+#define VcanGC_STK_SIZE 		256
+TaskHandle_t VcanGCTask_Handler;
+void VcanGC_task(void *pvParameters);
 
-#define Test_TASK_PRIO		6		
-#define Test_STK_SIZE 		256 	 	
-TaskHandle_t TestTask_Handler;		
-void Test_task(void *pvParameters);		
+#define Test_TASK_PRIO		6
+#define Test_STK_SIZE 		256
+TaskHandle_t TestTask_Handler;
+void Test_task(void *pvParameters);
 
-#define LogicalFlow_TASK_PRIO		6		
-#define LogicalFlow_STK_SIZE 		256 	 	
-TaskHandle_t LogicalFlowTask_Handler;		
-void LogicalFlow_task(void *pvParameters);	
+#define LogicalFlow_TASK_PRIO		6
+#define LogicalFlow_STK_SIZE 		256
+TaskHandle_t LogicalFlowTask_Handler;
+void LogicalFlow_task(void *pvParameters);
 
 
 void SystemClock_Config(void);
 static void MX_NVIC_Init(void);
+
 
 int main(void)
 {
     HAL_Init();						//Hal库初始化
     SystemClock_Config();	//系统时钟初始化
     MX_GPIO_Init();				//GPIO初始化
+
+
     MX_DMA_Init();				//DMA初始化
     MX_CAN1_Init();				//CAN1接口初始化
 
@@ -71,16 +74,16 @@ int main(void)
     MX_USART2_UART_Init();
     uart_receive_init(&USART2_HUART);//USART2DMA空闲中断
     MX_USART3_UART_Init();
-    uart_receive_init(&USART3_HUART);//USART3DMA空闲中断
+    uart_receive_init(&USART3_HUART);//USART3DMA空闲中断   ps2数据 现在拿来做为 openmv2的接收
     MX_USART6_UART_Init();
-    uart_receive_init(&IMU_HUART);//usart6DMA接收mti30数据
+    uart_receive_init(&IMU_HUART);//usart6DMA接收陀螺仪数据
     MX_UART7_Init();			//uart7DMA接收
-    uart_receive_init(&OPENMV_HUART);//USART7DMA空闲中断
+    uart_receive_init(&OPENMV_HUART);//USART7DMA空闲中断  openmv
     MX_UART8_Init();		//usart8DMA发送数据给山外上位机
 
     MX_NVIC_Init();				//中断优先级初始化
     //定时器时钟90M分频系数9000-1,定时器3的频率90M/9000=10K自动重装载10-1,定时器周期1ms
-    TIM3_Init(10-1,9000-1);//定时器3初始化 步态震荡时钟
+    //TIM3_Init(10-1,9000-1);//定时器3初始化 步态震荡时钟
 
     my_can_filter_init_recv_all(&hcan1);//开启CAN滤波器
     HAL_CAN_Receive_IT(&hcan1, CAN_FIFO0);//开启CAN1
@@ -92,13 +95,15 @@ int main(void)
     //f=Tck/(psc+1)*(arr+1) 定时器时钟为90M  50Hz=180MHz/(90*20000)
     Servo_Init(20000-1,90-1);//舵机PWM通道初始化
 
-    //TIM2_CH3_Cap_Init(0XFFFFFFFF,90-1); //PWM捕获 以1MHZ的频率计数
+    TIM2_CH3_Cap_Init(0XFFFFFFFF,90-1); //PWM捕获 以1MHZ的频率计数
 
-    Servo1_DOWN;//舵机1复位
-    Servo2_DOWN_POS;//舵机2复位
-    Servo3_CLOSE;
+    Servo1_OPEN;//舵机1复位
 
-//    HAL_GPIO_WritePin(GPIOH,GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5,GPIO_PIN_SET);  //开启四个24V输出
+
+//    Servo2_DOWN_POS;//舵机2复位
+//    Servo3_CLOSE;
+
+    power_ctrl_on_all(); //开启全部的24V输出
 
     printf("\r\n/*************SYSTEM INIT SUCCESS****************/ \r\n");
 
@@ -116,7 +121,9 @@ int main(void)
 //开始任务任务函数
 void start_task(void *pvParameters)
 {
-    BeginWarnBuzzer();
+    BeginWarnBuzzer();		//开机提示音
+
+    robomoudle_init();		//初始化robomoudle
 
     taskENTER_CRITICAL();           //进入临界区
     //创建MotorControl_task
@@ -126,14 +133,14 @@ void start_task(void *pvParameters)
                 (void*          )NULL,
                 (UBaseType_t    )MotorControl_TASK_PRIO,
                 (TaskHandle_t*  )&MotorControlTask_Handler);
-//    //创建PostureControl_task
-//    xTaskCreate((TaskFunction_t )PostureControl_task,
-//                (const char*    )"PostureControl_task",
-//                (uint16_t       )PostureControl_STK_SIZE,
-//                (void*          )NULL,
-//                (UBaseType_t    )PostureControl_TASK_PRIO,
-//                (TaskHandle_t*  )&PostureControlTask_Handler);
-//    //创建NAVIGATION任务
+    //创建PostureControl_task
+    xTaskCreate((TaskFunction_t )PostureControl_task,
+                (const char*    )"PostureControl_task",
+                (uint16_t       )PostureControl_STK_SIZE,
+                (void*          )NULL,
+                (UBaseType_t    )PostureControl_TASK_PRIO,
+                (TaskHandle_t*  )&PostureControlTask_Handler);
+    //创建NAVIGATION任务
 //    xTaskCreate((TaskFunction_t )Navi_task,
 //                (const char*    )"Navi_task",
 //                (uint16_t       )Navi_STK_SIZE,
@@ -148,26 +155,26 @@ void start_task(void *pvParameters)
 //                (UBaseType_t    )Detect_TASK_PRIO,
 //                (TaskHandle_t*  )&DetectTask_Handler);
     //创建Debug_task
-    xTaskCreate((TaskFunction_t )Debug_task,
-                (const char*    )"Debug_task",
-                (uint16_t       )Debug_STK_SIZE,
-                (void*          )NULL,
-                (UBaseType_t    )Debug_TASK_PRIO,
-                (TaskHandle_t*  )&DebugTask_Handler);
-//    //创建Rc_task
-//    xTaskCreate((TaskFunction_t )Rc_task,
-//                (const char*    )"Rc_task",
-//                (uint16_t       )Rc_STK_SIZE,
+//    xTaskCreate((TaskFunction_t )Debug_task,
+//                (const char*    )"Debug_task",
+//                (uint16_t       )Debug_STK_SIZE,
 //                (void*          )NULL,
-//                (UBaseType_t    )Rc_TASK_PRIO,
-//                (TaskHandle_t*  )&RcTask_Handler);
-    //创建VcanGC任务 VCAN ground control 山外上位机
-    xTaskCreate((TaskFunction_t )VcanGC_task,
-                (const char*    )"VcanGC_task",
-                (uint16_t       )VcanGC_STK_SIZE,
+//                (UBaseType_t    )Debug_TASK_PRIO,
+//                (TaskHandle_t*  )&DebugTask_Handler);
+    //创建Rc_task
+    xTaskCreate((TaskFunction_t )Rc_task,
+                (const char*    )"Rc_task",
+                (uint16_t       )Rc_STK_SIZE,
                 (void*          )NULL,
-                (UBaseType_t    )VcanGC_TASK_PRIO,
-                (TaskHandle_t*  )&VcanGCTask_Handler);
+                (UBaseType_t    )Rc_TASK_PRIO,
+                (TaskHandle_t*  )&RcTask_Handler);
+//    //创建VcanGC任务 VCAN ground control 山外上位机
+//    xTaskCreate((TaskFunction_t )VcanGC_task,
+//                (const char*    )"VcanGC_task",
+//                (uint16_t       )VcanGC_STK_SIZE,
+//                (void*          )NULL,
+//                (UBaseType_t    )VcanGC_TASK_PRIO,
+//                (TaskHandle_t*  )&VcanGCTask_Handler);
     //创建Test任务
     xTaskCreate((TaskFunction_t )Test_task,
                 (const char*    )"Test_task",
@@ -188,53 +195,84 @@ void start_task(void *pvParameters)
 
 }
 
+void ResetStart(void);
 
 void Test_task(void *pvParameters)
 {
 
     float kalam;
+
     for(;;) {
 
-//        if(keyRestart3==0) {
-//            vTaskDelay(200);
-//            if(keyRestart3==0) {
-//                IndicateLED_On;
-//                state= STOP;
-//                vTaskDelay(800);
-//                vTaskDelete(LogicalFlowTask_Handler);
-//                vTaskDelay(200);
+//        IndLED_On(IndColorBlue);
 
-//                taskENTER_CRITICAL();           //进入临界区
-//                xTaskCreate((TaskFunction_t )LogicalFlow_task,
-//                            (const char*    )"LogicalFlow_task",
-//                            (uint16_t       )LogicalFlow_STK_SIZE,
-//                            (void*           )NULL,
-//                            (UBaseType_t    )LogicalFlow_TASK_PRIO,
-//                            (TaskHandle_t*  )&LogicalFlowTask_Handler);
-//                taskEXIT_CRITICAL();            //退出临界区
+        vTaskDelay(200);
 
-//                IndicateLED_Off;
+        ResetStart();
 
-//            }
+//        CAN_RoboModule_DRV_Position_Mode(0,1,4000,2000*4*15.15);  //2100
+//			
+//			    Servo1_OPEN;//舵机1复位
+
+//        osDelay(3000);
+
+//        CAN_RoboModule_DRV_Position_Mode(0,1,1000,0);
+//			
+//			    Servo1_CLOSE;//舵机1复位
+
+//			osDelay(3000);
+
+//        IndLED_Off();
+
+//        vTaskDelay(1000);
+
+
+
+//printf("  tick %u\r\n",HAL_GetTick());
+//	printf("  times %llu\r\n",times);
+        //		printf("  step_len_throttle %f  step_len_yaw %f  steplen %f\r\n",step_len_throttle,step_len_yaw,RcDetachedParam.detached_params_0.step_length);
+        //printf("moto_chassis[0].given_current; %f\r\n",(float)moto_chassis[0].given_current/ 819.2);
+
+//				printf("  step_len_rotate_angle %f   \r\n",step_len_rotate_angle);
+//        printf("real_current %f  rev_current %f estimate_moment %f\r\n", moto_chassis[0].real_current, moto_chassis[0].real_current-moto_chassis[0].given_current/ 819.2, moto_chassis[0].real_current*0.3);
+
+
+        //printf("T; %f\r\n",(float)moto_chassis[0].given_current/ 819.2*0.3);
+
+//        if(ppm_rx[0])//成功捕获到了一次上升沿
+//        {
+
+
+
+           printf("左右:%d 前后:%d 油门:%d 航向:%d chanel5-SWA:%d chanel6-SWB:%d chanel7-VRA:%d chanel8-SWC:%d  \r\n",ppm_rx[1],ppm_rx[2],ppm_rx[3],ppm_rx[4],ppm_rx[5],ppm_rx[6],ppm_rx[7],ppm_rx[8]);
+//            vTaskDelay(10);
+//            ppm_rx[0]=0;
 //        }
 
-//test_speed+=200;
-temp_pid.ref_agle[0]=0;
-IsMotoReadyOrNot= IsReady;
-        vTaskDelay(1500);
-				
-temp_pid.ref_agle[0]=100000;
-IsMotoReadyOrNot= IsReady;
-				vTaskDelay(1500);
+//        test_speed+=500;
+//        IsMotoReadyOrNot= IsReady;
+//        vTaskDelay(1500);
+
+//        if(test_speed>=9500)
+//        {
+//            test_speed=0;
+//        }
+
+
+//temp_pid.ref_agle[0]=0;
+//IsMotoReadyOrNot= IsReady;
+//        vTaskDelay(2000);
+
+//temp_pid.ref_agle[0]=100000;
+//IsMotoReadyOrNot= IsReady;
+//				vTaskDelay(2000);
+
 //								if(temp_pid.ref_agle[0]>=8000)
 //				{
 //					temp_pid.ref_agle[0]=0;
 //				}
-								
-//				if(test_speed>=8000)
-//				{
-//					test_speed=0;
-//				}
+
+
 
 //StartPosToMiddlePos();
 
@@ -247,11 +285,30 @@ IsMotoReadyOrNot= IsReady;
 
 //printf("Yaw %f dev_high %f\r\n",imuinfo.ActVal[0],step_high_dev );
 
-//
-//        printf("Yaw %f step_len_dev %f 偏心度%f  白线角%f  色块%f \r\n",imuinfo.ActVal[0],step_len_dev,openmvinfo.ActVal[0],openmvinfo.ActVal[1],openmvinfo.ActVal[2]);
+
+
+
+
+
+//printf("Yaw %f step_len_dev %f 偏心度%f  白线角%f  前色块%f 后色块%f\r\n",imuinfo.ActVal[0],step_len_dev,openmvinfo.ActVal[0],openmvinfo.ActVal[1],openmvinfo.ActVal[2],openmv2info.ActVal[2]);
+
+
+
+
+
+
+//		for(int i=0 ; i<8 ; i++)
+//		printf(" hall   %d",moto_chassis[i].hall);
+//		printf(" \r\n");
+
 
 //				printf(" CCR1 %d  CCR2 %d  CCR3 %d\r\n",(int)TIM4->CCR1,(int)TIM4->CCR2,(int)TIM4->CCR3);
-//        printf(" tockenA %d startB %d restart1U %d restart2V %d restart3W %d	restartclimbc %d inf1S %d inf2T %d\r\n",HAL_GPIO_ReadPin(GPIOI,GPIO_PIN_0),HAL_GPIO_ReadPin(GPIOH,GPIO_PIN_12),HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_2),HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_3),HAL_GPIO_ReadPin(GPIOI,GPIO_PIN_5),HAL_GPIO_ReadPin(GPIOH,GPIO_PIN_11),HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_0),HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_1));
+
+//        printf("restart1U %d restart2V %d restartclimbc %d restart3W %d	startB %d	inf1S %d inf2T %d\r\n",keyRestart1,keyRestart2,keyRestartclimb,keyRestart3,keyStart,keyInf1,keyInf2);
+
+
+
+
 
 //        printf("步高 %2.1f  ",state_detached_params[state].detached_params_0.stance_height);
 //        printf("步长 %2.1f  ",state_detached_params[state].detached_params_0.step_length);
@@ -259,8 +316,9 @@ IsMotoReadyOrNot= IsReady;
 //        printf("压腿高 %2.1f  ",state_detached_params[state].detached_params_0.down_amp);
 //        printf("飞行占比 %2.2f  ",state_detached_params[state].detached_params_0.flight_percent);
 //        printf("频率 %2.1f  ",state_detached_params[state].detached_params_0.freq);
-
 //        printf("\r\n");
+
+
 
 
 
@@ -320,50 +378,42 @@ IsMotoReadyOrNot= IsReady;
     }
 }
 
-/////--------转向------1-----///
-//        _rotate_angle=20;		//转向
-//        yaw_set=20;
-//        state = ROTAT_LEFT;
-//        while(imuinfo.ActVal[0]<=_rotate_angle)
-//            osDelay(50);
-//
-//        state= STOP;
-//        vTaskDelay(500);
 
-//        state= TROT;		//继续走直到转弯检测
+void ResetStart(void)
+{
 
-//        while(1)  //等待白线角度>=80
-//        {
-//            vTaskDelay(300);
-//            if(openmvinfo.ActVal[1]>=80)
-//            {
-//                vTaskDelay(300);
-//                if(openmvinfo.ActVal[1]>=80)
-//                {
-//                    vTaskDelay(300);
-//                    if(openmvinfo.ActVal[1]>=80)
-//                        break;
-//                }
-//            }
-//        }
+    if(keyRestart3==0) {
+        while(keyRestart3==0)
+            vTaskDelay(200);
 
-//				vTaskDelay(2000);
-//        state=STOP;
-//        state=REALSE;
+        CAN_RoboModule_DRV_Position_Mode(0,1,2000,0);
+
+        restartflag = 1;
+
+				IndicateLED_Off;
+        IndLED_On(IndColorRed);
+				IndLED_On(IndColorBlue);
+        state= STOP;
+        vTaskDelay(300);
+        vTaskDelete(LogicalFlowTask_Handler);
+        vTaskDelay(200);
+
+        taskENTER_CRITICAL();           //进入临界区
+        xTaskCreate((TaskFunction_t )LogicalFlow_task,
+                    (const char*    )"LogicalFlow_task",
+                    (uint16_t       )LogicalFlow_STK_SIZE,
+                    (void*           )NULL,
+                    (UBaseType_t    )LogicalFlow_TASK_PRIO,
+                    (TaskHandle_t*  )&LogicalFlowTask_Handler);
+        taskEXIT_CRITICAL();            //退出临界区
 
 
-//        _rotate_angle=0;		//转向
-//        yaw_set=0;
-//        state = ROTAT_RIGHT;
-
-//        while(imuinfo.ActVal[0]>=_rotate_angle)
-//            osDelay(50);
-//        state= STOP;
-
-//        vTaskDelay(300);
-//        state= TROT;
+       
+          IndicateLED_Off;
+    }
 
 
+}
 
 void SystemClock_Config(void)
 {
