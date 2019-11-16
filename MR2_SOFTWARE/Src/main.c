@@ -127,19 +127,19 @@ void start_task(void *pvParameters)
 
     taskENTER_CRITICAL();           //进入临界区
     //创建MotorControl_task
-    xTaskCreate((TaskFunction_t )MotorControl_task,
-                (const char*    )"MotorControl_task",
-                (uint16_t       )MotorControl_STK_SIZE,
-                (void*          )NULL,
-                (UBaseType_t    )MotorControl_TASK_PRIO,
-                (TaskHandle_t*  )&MotorControlTask_Handler);
-    //创建PostureControl_task
-    xTaskCreate((TaskFunction_t )PostureControl_task,
-                (const char*    )"PostureControl_task",
-                (uint16_t       )PostureControl_STK_SIZE,
-                (void*          )NULL,
-                (UBaseType_t    )PostureControl_TASK_PRIO,
-                (TaskHandle_t*  )&PostureControlTask_Handler);
+//    xTaskCreate((TaskFunction_t )MotorControl_task,
+//                (const char*    )"MotorControl_task",
+//                (uint16_t       )MotorControl_STK_SIZE,
+//                (void*          )NULL,
+//                (UBaseType_t    )MotorControl_TASK_PRIO,
+//                (TaskHandle_t*  )&MotorControlTask_Handler);
+//    //创建PostureControl_task
+//    xTaskCreate((TaskFunction_t )PostureControl_task,
+//                (const char*    )"PostureControl_task",
+//                (uint16_t       )PostureControl_STK_SIZE,
+//                (void*          )NULL,
+//                (UBaseType_t    )PostureControl_TASK_PRIO,
+//                (TaskHandle_t*  )&PostureControlTask_Handler);
     //创建NAVIGATION任务
 //    xTaskCreate((TaskFunction_t )Navi_task,
 //                (const char*    )"Navi_task",
@@ -162,12 +162,12 @@ void start_task(void *pvParameters)
 //                (UBaseType_t    )Debug_TASK_PRIO,
 //                (TaskHandle_t*  )&DebugTask_Handler);
     //创建Rc_task
-    xTaskCreate((TaskFunction_t )Rc_task,
-                (const char*    )"Rc_task",
-                (uint16_t       )Rc_STK_SIZE,
-                (void*          )NULL,
-                (UBaseType_t    )Rc_TASK_PRIO,
-                (TaskHandle_t*  )&RcTask_Handler);
+//    xTaskCreate((TaskFunction_t )Rc_task,
+//                (const char*    )"Rc_task",
+//                (uint16_t       )Rc_STK_SIZE,
+//                (void*          )NULL,
+//                (UBaseType_t    )Rc_TASK_PRIO,
+//                (TaskHandle_t*  )&RcTask_Handler);
 //    //创建VcanGC任务 VCAN ground control 山外上位机
 //    xTaskCreate((TaskFunction_t )VcanGC_task,
 //                (const char*    )"VcanGC_task",
@@ -207,8 +207,11 @@ void Test_task(void *pvParameters)
 //        IndLED_On(IndColorBlue);
 
         vTaskDelay(200);
+			
+			
+			
 
-        ResetStart();
+//        ResetStart();
 
 //        CAN_RoboModule_DRV_Position_Mode(0,1,4000,2000*4*15.15);  //2100
 //			
@@ -244,7 +247,7 @@ void Test_task(void *pvParameters)
 
 
 
-           printf("左右:%d 前后:%d 油门:%d 航向:%d chanel5-SWA:%d chanel6-SWB:%d chanel7-VRA:%d chanel8-SWC:%d  \r\n",ppm_rx[1],ppm_rx[2],ppm_rx[3],ppm_rx[4],ppm_rx[5],ppm_rx[6],ppm_rx[7],ppm_rx[8]);
+//           printf("左右:%d 前后:%d 油门:%d 航向:%d chanel5-SWA:%d chanel6-SWB:%d chanel7-VRA:%d chanel8-SWC:%d  \r\n",ppm_rx[1],ppm_rx[2],ppm_rx[3],ppm_rx[4],ppm_rx[5],ppm_rx[6],ppm_rx[7],ppm_rx[8]);
 //            vTaskDelay(10);
 //            ppm_rx[0]=0;
 //        }
