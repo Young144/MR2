@@ -1,6 +1,9 @@
-﻿# 【开源四足机器人】--HCRT
+﻿# [开源四足机器人]--HCRT四足
 
 
+![](./img/Jump.gif)
+
+![](./img/Jump2.gif)
 
 
 ## 湖北工业大学 ROBOCON 2019 
