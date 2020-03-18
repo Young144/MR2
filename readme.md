@@ -1,4 +1,4 @@
-﻿# [开源四足机器人] HCRT-DOG
+﻿# 【开源四足机器人】 HCRT-DOG
 
 ![](./img/Jump.gif)
 
