@@ -11,8 +11,8 @@
 
 更多信息请访问：
 
-我的博客：https://yltzdhbc.top/archives/
+我的博客：https://yltzdhbc.top/2020/08/16/HCRT-DOG/
 
-github: https://github.com/yltzdhbc/MR2
+github: https://github.com/yltzdhbc/HCRT-DOG
 
-gitee: https://gitee.com/yltzdhbc/MR2
+gitee: https://gitee.com/yltzdhbc/HCRT-DOG
